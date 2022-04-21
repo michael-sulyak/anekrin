@@ -364,7 +364,7 @@ class AnswerWithTaskInfo(BaseHandler):
             )
             return
         except Exception as e:
-            logging.info(e)
+            logging.error(e)
             await self.message.answer(
                 'Error. Check your data.',
                 reply_markup=get_reply_for_cancel_question('Cancel editing'),

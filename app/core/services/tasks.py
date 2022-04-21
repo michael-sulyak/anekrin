@@ -139,7 +139,7 @@ class TaskManager:
                 for work_log_info in work_logs_info
             )
         except Exception as e:
-            logging.info(e)
+            logging.error(e)
             raise ValidationError('Wrong data.')
 
         async with lock_by_user(self.user.id):

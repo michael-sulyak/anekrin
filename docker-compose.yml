@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: deploy/Dockerfile
     env_file:
-      - envs/local.env
+      - ../envs/local.env
     volumes:
       - .:/app
     depends_on:
@@ -25,7 +25,7 @@ services:
     ports:
       - "5432:5432"
     env_file:
-      - envs/local.env
+      - ../envs/local.env
 
 volumes:
   postgres_data: { }

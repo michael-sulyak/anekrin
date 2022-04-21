@@ -3,7 +3,7 @@
 [![Scrutinizer Code Quality](https://img.shields.io/scrutinizer/g/expert-m/anekrin.svg?style=flat)](https://scrutinizer-ci.com/g/expert-m/anekrin/?branch=master)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/expert-m/anekrin.svg?style=flat)](https://lgtm.com/projects/g/expert-m/anekrin/alerts/)
 [![GitHub Issues](https://img.shields.io/github/issues/expert-m/anekrin.svg?style=flat)](https://github.com/expert-m/anekrin/issues)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue)](https://choosealicense.com/licenses/apache-2.0/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](https://choosealicense.com/licenses/apache-2.0/)
 
 > Anekrin is a simple task manager for evaluating personal performance.
 
@@ -24,7 +24,7 @@
 
 ## To Do
 
-* ✅ Implement PoF.
+* ✅ Implement PoC.
 * ⬜️ Add encryption for user data.
 
 

@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  core:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    env_file:
+      - envs/local.env
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+    networks:
+      - default
+      - telehooks_mq
+    command: python3 ./__main__.py
+
+  postgres:
+    restart: always
+    image: postgres:14.2
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - envs/local.env
+
+volumes:
+  postgres_data: { }
+
+networks:
+  telehooks_mq:
+    external: true

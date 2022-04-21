@@ -4,7 +4,7 @@ import typing
 import asyncpg
 from asyncpg import Connection
 from tortoise import Tortoise, transactions
-from tortoise.queryset import ValuesListQuery
+from tortoise.queryset import ValuesListQuery, ValuesQuery
 
 from . import config
 from .. import models
@@ -62,6 +62,11 @@ async def get_first(query: ValuesListQuery) -> typing.Any:
         return None
 
     return result[0]
+
+
+async def get_count(query: typing.Union[ValuesListQuery, ValuesQuery]) -> int:
+    conn = Tortoise.get_connection('default')
+    return (await conn.execute_query(f'SELECT COUNT(*) FROM ({query.as_query()}) AS temp;'))[0]
 
 
 async def get_common_db_connection() -> Connection:

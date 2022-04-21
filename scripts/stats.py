@@ -8,7 +8,7 @@ import sys
 sys.path.append('/app')
 
 from app import models
-from app.models.utils import init_db
+from app.models.utils import get_count, init_db
 
 
 async def main() -> None:
@@ -18,9 +18,11 @@ async def main() -> None:
     print(json.dumps(
         {
             'users': await models.User.all().count(),
-            'active_users': await models.WorkLog.filter(
+            'active_users': await get_count(models.WorkLog.filter(
                 date__gte=datetime.date.today() - datetime.timedelta(days=2),
-            ).distinct().count(),
+            ).distinct().values(
+                'owner_id',
+            )),
         },
         indent=2,
     ))

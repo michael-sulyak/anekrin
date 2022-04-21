@@ -18,11 +18,9 @@ async def main() -> None:
     print(json.dumps(
         {
             'users': await models.User.all().count(),
-            'active_users': len(await models.WorkLog.filter(
+            'active_users': await models.WorkLog.filter(
                 date__gte=datetime.date.today() - datetime.timedelta(days=2),
-            ).distinct().values_list(
-                'owner_id',
-            )),
+            ).distinct().count(),
         },
         indent=2,
     ))

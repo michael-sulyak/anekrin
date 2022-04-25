@@ -1,8 +1,8 @@
+import abc
 import datetime
 import io
 import json
 import logging
-from json import JSONDecodeError
 
 from aiogram.types import (
     Document as TelegramDocument, InlineKeyboardButton, InlineKeyboardMarkup,
@@ -303,9 +303,9 @@ class CreateTask(BaseHandler):
         )
 
 
-class ChangeTaskName(BaseHandler):
-    name = CallbackCommands.CHANGE_TASK_NAME
+class BaseHandlerForTaskFieldUpdating(BaseHandler, abc.ABC):
     type = HandlerTypes.CALLBACK_QUERY
+    question_type: str
 
     async def handle(self, task_id: str) -> None:
         user_manager = UserManager(user=self.message.from_user)
@@ -314,7 +314,19 @@ class ChangeTaskName(BaseHandler):
         task_id = int(task_id)
         task = await task_manager.get_task(task_id)
 
-        await user_manager.wait_answer_for(f'{QuestionTypes.CHANGE_TASK_NAME} {task.id}')
+        await user_manager.wait_answer_for(f'{self.question_type} {task.id}')
+        await self._send_prompt(task)
+
+    @abc.abstractmethod
+    async def _send_prompt(self, task: models.Task) -> None:
+        pass
+
+
+class ChangeTaskName(BaseHandlerForTaskFieldUpdating):
+    name = CallbackCommands.CHANGE_TASK_NAME
+    question_type = QuestionTypes.CHANGE_TASK_NAME
+
+    async def _send_prompt(self, task: models.Task) -> None:
         await self.message.answer('You want to update the name for task:')
         await self.message.answer(
             f'`{escape_md(task.name)}`',
@@ -322,6 +334,22 @@ class ChangeTaskName(BaseHandler):
         )
         await self.message.answer(
             'Enter the new task name:',
+            reply_markup=get_reply_for_cancel_question(),
+        )
+
+
+class ChangeTaskReward(BaseHandlerForTaskFieldUpdating):
+    name = CallbackCommands.CHANGE_TASK_REWARD
+    question_type = QuestionTypes.CHANGE_TASK_NAME
+
+    async def _send_prompt(self, task: models.Task) -> None:
+        await self.message.answer(
+            (
+                f'You want to update the task reward:\n'
+                f'`{escape_md(task.name)}`\n\n'
+                f'Enter the new task reward:'
+            ),
+            parse_mode=ParseModes.MARKDOWN_V2,
             reply_markup=get_reply_for_cancel_question(),
         )
 
@@ -358,8 +386,8 @@ class AnswerWithTaskInfo(BaseHandler):
         try:
             await task_manager.save_tasks_info(tasks_info)
         except ValidationError as e:
-            await self.message.answer(
-                str(e),
+            await self.message.answer_error(
+                e,
                 reply_markup=get_reply_for_cancel_question('Cancel editing'),
             )
             return
@@ -374,29 +402,6 @@ class AnswerWithTaskInfo(BaseHandler):
         await user_manager.clear_waiting_of_answer()
 
         await self.message.answer(f'Saved {emojize(":thumbs_up:")}')
-
-
-class ChangeTaskReward(BaseHandler):
-    name = CallbackCommands.CHANGE_TASK_REWARD
-    type = HandlerTypes.CALLBACK_QUERY
-
-    async def handle(self, task_id: str) -> None:
-        user_manager = UserManager(user=self.message.from_user)
-        task_manager = TaskManager(user=self.message.from_user)
-
-        task_id = int(task_id)
-        task = await task_manager.get_task(task_id)
-
-        await user_manager.wait_answer_for(f'{QuestionTypes.CHANCE_TASK_REWARD} {task.id}')
-        await self.message.answer(
-            (
-                f'You want to update the task reward:\n'
-                f'`{escape_md(task.name)}`\n\n'
-                f'Enter the new task reward:'
-            ),
-            parse_mode=ParseModes.MARKDOWN_V2,
-            reply_markup=get_reply_for_cancel_question(),
-        )
 
 
 class ChangeTaskPosition(BaseHandler):
@@ -456,7 +461,7 @@ class AnswerWithNewTaskPosition(BaseHandler):
                 new_task_position=new_task_position,
             )
         except ValidationError as e:
-            await self.message.answer(str(e))
+            await self.message.answer_error(e)
             return
 
         await user_manager.clear_waiting_of_answer()
@@ -721,7 +726,7 @@ class DeleteWorkLog(BaseHandler):
         try:
             result = await task_manager.delete_work_log(work_log_id)
         except ValidationError as e:
-            await self.message.answer(str(e))
+            await self.message.answer_error(e)
         else:
             await self.message.answer(f'Successfully removed {emojize(":thumbs_up:")}')
 
@@ -791,7 +796,7 @@ class AnswerWithWorkLogs(BaseHandler):
 
         try:
             data = json.load(buffer)
-        except JSONDecodeError:
+        except json.JSONDecodeError:
             await self.message.answer(
                 'JSON is invalid.',
                 reply_markup=get_reply_for_cancel_question(),
@@ -803,8 +808,8 @@ class AnswerWithWorkLogs(BaseHandler):
         try:
             await task_manager.import_work_logs(data)
         except ValidationError as e:
-            await self.message.answer(
-                str(e),
+            await self.message.answer_error(
+                e,
                 reply_markup=get_reply_for_cancel_question(),
             )
         except Exception as e:

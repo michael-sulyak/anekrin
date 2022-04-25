@@ -45,6 +45,7 @@ class QuestionTypes(ClassPropertyAllMixin):
 
 
 class ParseModes:
+    TEXT = None
     MARKDOWN_V2 = 'MarkdownV2'
 
 

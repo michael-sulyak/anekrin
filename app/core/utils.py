@@ -7,7 +7,7 @@ from emoji.core import emojize
 
 from . import constants
 from .base import BaseMessage
-from ..models import config
+from .. import config
 
 
 def get_main_reply_keyboard_markup() -> ReplyKeyboardMarkup:

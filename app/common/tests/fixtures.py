@@ -1,10 +1,10 @@
 import asyncio
-import os
 import typing
 
 import pytest
 from tortoise import Tortoise
 
+from ... import config
 from ...models.utils import close_db, get_common_db_connection, init_db
 
 
@@ -22,11 +22,11 @@ def event_loop():
 
 @pytest.fixture(scope='session', autouse=True)
 async def setup_database() -> typing.Generator:
-    assert os.environ['POSTGRES_DB'].endswith('_test')
+    assert config.DATABASE_NAME.endswith('_test')
 
     common_conn = await get_common_db_connection()
-    await common_conn.execute(f'DROP DATABASE IF EXISTS {os.environ["POSTGRES_DB"]};')
-    await common_conn.execute(f'CREATE DATABASE {os.environ["POSTGRES_DB"]};')
+    await common_conn.execute(f'DROP DATABASE IF EXISTS {config.DATABASE_NAME};')
+    await common_conn.execute(f'CREATE DATABASE {config.DATABASE_NAME};')
     await common_conn.close()
 
     await init_db(generate_schema=True)
@@ -36,7 +36,7 @@ async def setup_database() -> typing.Generator:
     await close_db()
 
     common_conn = await get_common_db_connection()
-    await common_conn.execute(f'DROP DATABASE {os.environ["POSTGRES_DB"]};')
+    await common_conn.execute(f'DROP DATABASE {config.DATABASE_NAME};')
     await common_conn.close()
 
 
@@ -58,7 +58,7 @@ async def clean_db() -> None:
         if table_names:
             clean_db.sql_for_truncate = f'TRUNCATE {", ".join(table_names)};'
         else:
-            clean_db.sql_for_truncate = ''
+            clean_db.sql_for_truncate = None
 
     if clean_db.sql_for_truncate:
         await conn.execute_query(clean_db.sql_for_truncate)

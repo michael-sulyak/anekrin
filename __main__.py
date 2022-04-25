@@ -3,7 +3,6 @@ import json
 import logging
 import signal
 import typing
-from asyncio import CancelledError
 from functools import partial
 
 import aio_pika
@@ -16,9 +15,9 @@ from matplotlib import pyplot as plt
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.threading import ThreadingIntegration
 
+from app import config
 from app.core.services.telegram import TelegramMessageHandler
 from app.core.utils import init_telegram_bot
-from app.models import config
 from app.models.utils import close_db, init_db
 
 

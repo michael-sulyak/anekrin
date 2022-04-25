@@ -24,7 +24,7 @@ mplcyberpunk = "^0.5.0"
 [tool.poetry.dev-dependencies]
 
 [tool.aerich]
-tortoise_orm = "app.models.config.TORTOISE_ORM"
+tortoise_orm = "app.config.TORTOISE_ORM"
 location = "./migrations"
 src_folder = "./."
 

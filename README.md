@@ -24,7 +24,8 @@
 
 ## To Do
 
-* ✅ Implement PoC.
+* ✅ Implement PoC;
+* ⬜️ Write tests for basic functional;
 * ⬜️ Add encryption for user data.
 
 

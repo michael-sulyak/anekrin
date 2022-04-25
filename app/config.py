@@ -1,7 +1,7 @@
 import os
 
 
-DATABASE_NAME = 'anekrin'
+DATABASE_NAME = os.environ['POSTGRES_DB']
 DATABASE_USER = os.environ['POSTGRES_USER']
 DATABASE_PASSWORD = os.environ['POSTGRES_PASSWORD']
 DATABASE_HOST = os.environ['POSTGRES_HOST']

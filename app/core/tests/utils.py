@@ -16,6 +16,10 @@ def create_mocked_class_for_message() -> tuple[typing.Type[BaseMessage], list[Ac
             calls.append(ActualCall('answer', args, kwargs))
             return TelegramMessage()
 
+        async def answer_error(self, *args, **kwargs) -> TelegramMessage:
+            calls.append(ActualCall('answer_error', args, kwargs))
+            return TelegramMessage()
+
         async def answer_document(self, *args, **kwargs) -> TelegramMessage:
             calls.append(ActualCall('answer_document', args, kwargs))
             return TelegramMessage()

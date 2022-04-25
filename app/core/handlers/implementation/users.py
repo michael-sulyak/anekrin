@@ -121,8 +121,8 @@ class AnswerWithTZ(BaseHandler):
         try:
             await user_manager.update_user_timezone(new_timezone)
         except ValidationError as e:
-            await self.message.answer(
-                str(e),
+            await self.message.answer_error(
+                e,
                 reply_markup=get_reply_for_cancel_question('Cancel time zone selecting'),
             )
             return

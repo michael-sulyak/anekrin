@@ -3,12 +3,11 @@ import json
 import logging
 import typing
 from collections import defaultdict
-from json import JSONDecodeError
 
 from emoji.core import emojize
 from tortoise.functions import Max
 
-from .work_log_stats import WorkLogsStats
+from . import utils
 from .. import constants
 from ..exceptions import ValidationError
 from ... import models
@@ -152,66 +151,11 @@ class TaskManager:
     async def save_tasks_info(self, tasks_info: str) -> None:
         try:
             tasks_info = json.loads(tasks_info)
-        except JSONDecodeError:
+        except json.JSONDecodeError:
             raise ValidationError('JSON is invalid.')
 
         async with lock_by_user(self.user.id):
-            current_tasks = tuple(await models.Task.filter(
-                owner=self.user,
-            ))
-
-            current_tasks_map = {
-                current_task.name: current_task
-                for current_task in current_tasks
-            }
-
-            tasks_to_update = []
-            tasks_to_create = []
-
-            proceed_task_names = set()
-
-            for position, task_info in enumerate(tasks_info, 1):
-                task_name = task_info['name']
-                task_reward = task_info['reward']
-
-                if task_name in proceed_task_names:
-                    continue
-
-                proceed_task_names.add(task_name)
-
-                if task_name in current_tasks_map:
-                    task = current_tasks_map[task_name]
-                    task.position = position
-                    task.reward = task_reward
-                    tasks_to_update.append(task)
-                else:
-                    tasks_to_create.append(models.Task(
-                        name=task_name,
-                        owner=self.user,
-                        position=position,
-                        reward=task_reward,
-                    ))
-
-            task_ids_to_delete = (
-                    set(task.id for task in current_tasks)
-                    - set(task.id for task in tasks_to_update)
-            )
-
-            if task_ids_to_delete:
-                await models.Task.filter(
-                    id__in=task_ids_to_delete,
-                ).delete()
-
-            if tasks_to_update:
-                await models.Task.bulk_update(
-                    tasks_to_update,
-                    fields=('position', 'reward',),
-                )
-
-            if tasks_to_create:
-                await models.Task.bulk_create(
-                    tasks_to_create,
-                )
+            await utils.rewrite_current_user_tasks(tasks_info, for_user=self.user)
 
     @staticmethod
     async def update_task_name(*, task: models.Task, new_name: str) -> None:
@@ -306,7 +250,7 @@ class TaskManager:
 
             work_log = await create_work_log(task=task)
 
-            day_bonus = await self._recalculate_day_bonus(date=work_log.date)
+            day_bonus = await utils.recalculate_day_bonus(date=work_log.date, user=self.user)
 
         return {
             'day_bonus': day_bonus,
@@ -370,71 +314,8 @@ class TaskManager:
             date = work_log.date
             await work_log.delete()
 
-            day_bonus = await self._recalculate_day_bonus(date)
+            day_bonus = await utils.recalculate_day_bonus(date, user=self.user)
 
         return {
             'day_bonus': day_bonus,
         }
-
-    async def _recalculate_day_bonus(self, date: datetime.date, *, _max_next_days_to_check: int = 6) -> int:
-        # Note: Need to run with lock by a user
-
-        next_date = date + datetime.timedelta(days=1)
-
-        work_logs_stats = WorkLogsStats()
-        await work_logs_stats.set_data_from_db_for_period(
-            date_range=(date, next_date,),
-            for_user=self.user,
-        )
-
-        day_score = work_logs_stats.get_day_score(date)
-        bonus = (day_score - constants.TARGET_NUMBER) // 2
-
-        work_log = await models.WorkLog.filter(
-            type=constants.WorkLogTypes.BONUS,
-            date=next_date,
-            owner=self.user,
-        ).first()
-
-        if not work_log:
-            work_log = models.WorkLog(
-                name='',
-                type=constants.WorkLogTypes.BONUS,
-                date=next_date,
-                owner=self.user,
-                reward=0,
-            )
-
-        saved_bonus = work_log.reward
-
-        if bonus == saved_bonus:
-            return 0
-
-        work_log.reward = bonus
-
-        if work_log.reward <= 0:
-            if work_log.id is None:
-                result = 0
-            else:
-                await work_log.delete()
-                result = -saved_bonus
-        else:
-            if work_log.id is None:
-                await work_log.save()
-                result = bonus
-            else:
-                await work_log.save(update_fields=('reward',))
-                result = bonus - saved_bonus
-
-        if result != 0 and _max_next_days_to_check > 0:
-            old_day_score_for_tomorrow = work_logs_stats.get_day_score(next_date)
-            work_logs_stats.add_day_score(score=bonus - saved_bonus, date=next_date)
-            new_day_score_for_tomorrow = work_logs_stats.get_day_score(next_date)
-
-            if max(old_day_score_for_tomorrow, new_day_score_for_tomorrow) > constants.TARGET_NUMBER:
-                await self._recalculate_day_bonus(
-                    next_date,
-                    _max_next_days_to_check=_max_next_days_to_check - 1,
-                )
-
-        return result

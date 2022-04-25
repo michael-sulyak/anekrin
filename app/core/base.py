@@ -6,6 +6,8 @@ from aiogram.types import (
 )
 from aiogram.utils.exceptions import MessageNotModified
 
+from .constants import ParseModes
+from .exceptions import ValidationError
 from .services.tasks import TaskManager
 from .services.users import UserManager
 from .. import models
@@ -23,6 +25,10 @@ class BaseMessage(abc.ABC):
 
     @abc.abstractmethod
     async def answer(self, *args, **kwargs) -> TelegramMessage:
+        pass
+
+    @abc.abstractmethod
+    async def answer_error(self, error: ValidationError, **kwargs) -> TelegramMessage:
         pass
 
     @abc.abstractmethod
@@ -52,6 +58,13 @@ class Message(BaseMessage):
             kwargs['reply_markup'] = get_main_reply_keyboard_markup()
 
         return await self._telegram_message.answer(*args, **kwargs)
+
+    async def answer_error(self, error: ValidationError, **kwargs) -> TelegramMessage:
+        return await self.answer(
+            error.msg,
+            parse_mode=ParseModes.MARKDOWN_V2 if error.is_markdown else ParseModes.TEXT,
+            **kwargs,
+        )
 
     async def answer_document(self, *args, **kwargs) -> TelegramMessage:
         from .utils import get_main_reply_keyboard_markup

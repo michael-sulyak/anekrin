@@ -66,7 +66,7 @@ class TelegramMessageHandler:
         self._tasks_map = {}
 
     async def process_update(self,
-                             telegram_update: TelegramUpdate,*,
+                             telegram_update: TelegramUpdate, *,
                              immediately: bool = False) -> None:
         try:
             telegram_user_id = self._extract_telegram_user_id(telegram_update)

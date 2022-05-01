@@ -182,7 +182,7 @@ class CompleteTask(BaseHandler):
         )
 
         day_score = work_logs_stats.get_day_score(work_date)
-        day_amount = work_logs_stats.get_day_amount(work_date)
+        week_average = work_logs_stats.get_week_average(work_date)
 
         await self.message.edit_reply_markup(
             InlineKeyboardMarkup(inline_keyboard=[[
@@ -200,7 +200,7 @@ class CompleteTask(BaseHandler):
         await self.message.answer(
             (
                 f'Marked as completed \\(`{task.str_reward}`\\) {emojize(":thumbs_up:")}\n\n'
-                f'{get_day_performance_info(day_score=day_score, day_amount=day_amount)}'
+                f'{get_day_performance_info(day_score=day_score, week_average=week_average)}'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
         )
@@ -625,8 +625,8 @@ class ShowStats(BaseHandler):
 
         for i, date in enumerate(dates, 1):
             n = emojize(f':keycap_{i}:')
-            day_amount = work_logs_stats.get_day_amount(date)
-            answer += f'{n} *`{date.isoformat()}`:* `{day_amount}` {get_emojize_for_score(day_amount)}\n'
+            week_average = work_logs_stats.get_week_average(date)
+            answer += f'{n} *`{date.isoformat()}`:* `{week_average}` {get_emojize_for_score(week_average)}\n'
 
         work_logs = await task_manager.get_work_logs()
 
@@ -642,9 +642,9 @@ class ShowStats(BaseHandler):
                 answer += f'`{reward}` — {escape_md(work_log.showed_name)}\n'
 
         day_score = work_logs_stats.get_day_score(work_date)
-        day_amount = work_logs_stats.get_day_amount(work_date)
+        week_average = work_logs_stats.get_week_average(work_date)
 
-        answer += f'\n{get_day_performance_info(day_score=day_score, day_amount=day_amount)}'
+        answer += f'\n{get_day_performance_info(day_score=day_score, week_average=week_average)}'
 
         await self.message.answer(
             answer,

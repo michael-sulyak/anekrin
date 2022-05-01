@@ -51,10 +51,10 @@ class Help(BaseHandler):
                 'read a book a little \\(\\+20\\), went for a walk \\(\\+30\\)\\.\n'
                 'And tomorrow, instead of a walk, I watched a video lesson \\(\\+30\\) and as a result, '
                 'it also turned out to be a productive day\\.\n\n'
-                f'*{emojize(":keycap_3:")} Strive to have "`amount`" equal to 100\\.*\n'
+                f'*{emojize(":keycap_3:")} Strive to have "`average`" equal to 100\\.*\n'
                 'This is the sum of accumulated points for 7 days divided by 7\\.\n'
                 'Why? Because one day your productivity can be low, and the next day it can be high\\. '
-                'As a result, it is more useful to know the "`amount`" for the last seven days\\.\n\n'
+                'As a result, it is more useful to know the "`average`" for the last seven days\\.\n\n'
                 f'*Or just try it* {emojize(":winking_face:")}'
             ),
             parse_mode=ParseMode.MARKDOWN_V2,

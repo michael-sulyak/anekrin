@@ -86,7 +86,7 @@ class WorkLogsStats:
         one_day = datetime.timedelta(days=1)
 
         while date <= selected_work_date:
-            value = self.get_day_amount(date)
+            value = self.get_week_average(date)
 
             if value > constants.TARGET_NUMBER:
                 value = constants.TARGET_NUMBER
@@ -138,7 +138,7 @@ class WorkLogsStats:
     def get_day_score(self, for_date: datetime.date) -> int:
         return self._day_score_map.get(for_date, 0)
 
-    def get_day_amount(self, for_date: datetime.date) -> int:
+    def get_week_average(self, for_date: datetime.date) -> int:
         return sum(
             self._day_score_map.get(for_date - datetime.timedelta(days=i), 0)
             for i in range(7)

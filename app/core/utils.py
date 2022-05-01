@@ -74,11 +74,11 @@ def get_emojize_for_score(score: int) -> str:
         return emojize(':neutral_face:')
 
 
-def get_day_performance_info(*, day_score: int, day_amount: int) -> str:
+def get_day_performance_info(*, day_score: int, week_average: int) -> str:
     return (
         f'*Day performance:*\n'
         f'{emojize(":coin:")} *Score:* `{day_score}` {get_emojize_for_score(day_score)}\n'
-        f'{emojize(":trophy:")} *Amount:* `{day_amount}` {get_emojize_for_score(day_amount)}'
+        f'{emojize(":trophy:")} *Average:* `{week_average}` {get_emojize_for_score(week_average)}'
     )
 
 

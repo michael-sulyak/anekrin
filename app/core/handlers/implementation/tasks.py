@@ -340,14 +340,14 @@ class ChangeTaskName(BaseHandlerForTaskFieldUpdating):
 
 class ChangeTaskReward(BaseHandlerForTaskFieldUpdating):
     name = CallbackCommands.CHANGE_TASK_REWARD
-    question_type = QuestionTypes.CHANGE_TASK_NAME
+    question_type = QuestionTypes.CHANCE_TASK_REWARD
 
     async def _send_prompt(self, task: models.Task) -> None:
         await self.message.answer(
             (
                 f'You want to update the task reward:\n'
                 f'`{escape_md(task.name)}`\n\n'
-                f'Enter the new task reward:'
+                f'Enter the new task reward (0-{constants.TARGET_NUMBER}):'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
             reply_markup=get_reply_for_cancel_question(),

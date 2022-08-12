@@ -3,6 +3,7 @@ import json
 import logging
 import signal
 import typing
+from asyncio import exceptions as asyncio_exceptions
 from functools import partial
 
 import aio_pika
@@ -49,7 +50,7 @@ def init_settings_for_plt() -> None:
     plt.style.use('cyberpunk')
 
 
-async def main(loop: asyncio.AbstractEventLoop) -> typing.NoReturn:
+async def main() -> typing.NoReturn:
     logging.info('Initialization Telegram Bot...')
     init_telegram_bot()
 
@@ -62,7 +63,7 @@ async def main(loop: asyncio.AbstractEventLoop) -> typing.NoReturn:
     logging.info('Connecting to MQ...')
     connection = await aio_pika.connect_robust(
         url=config.TELEHOOKS_MQ_URL,
-        loop=loop,
+        loop=asyncio.get_running_loop(),
     )
     handler = TelegramMessageHandler()
 
@@ -80,17 +81,17 @@ async def main(loop: asyncio.AbstractEventLoop) -> typing.NoReturn:
                     async with message.process():
                         telegram_update = TelegramUpdate(**json.loads(message.body))
                         await handler.process_update(telegram_update)
-            except CancelledError:
+            except (asyncio_exceptions.CancelledError, asyncio_exceptions.TimeoutError,):
                 pass
 
 
-async def shutdown(loop: asyncio.AbstractEventLoop) -> None:
+async def shutdown() -> None:
     logging.info('Shutdown initialized...')
 
     current_task = asyncio.current_task()
     tasks = []
 
-    for task in asyncio.all_tasks(loop):
+    for task in asyncio.all_tasks():
         if task is current_task:
             continue
 
@@ -102,16 +103,19 @@ async def shutdown(loop: asyncio.AbstractEventLoop) -> None:
 
     logging.info('Shutdown completed.')
 
+    asyncio.get_running_loop().stop()
+
 
 if __name__ == '__main__':
     main_loop = asyncio.new_event_loop()
 
     for signal_name in ('SIGINT', 'SIGTERM',):
-        main_loop.add_signal_handler(getattr(signal, signal_name), partial(asyncio.ensure_future, shutdown(main_loop)))
+        main_loop.add_signal_handler(getattr(signal, signal_name), partial(main_loop.create_task, shutdown()))
+
+    main_loop.create_task(main())
 
     try:
-        main_loop.run_until_complete(main(main_loop))
+        main_loop.run_forever()
     finally:
-        main_loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(main_loop)))
         main_loop.close()
         logging.info('Successfully shutdown service.')

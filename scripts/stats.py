@@ -28,9 +28,4 @@ async def main() -> None:
     ))
 
 
-main_loop = asyncio.new_event_loop()
-
-try:
-    main_loop.run_until_complete(main())
-finally:
-    main_loop.close()
+asyncio.run(main())

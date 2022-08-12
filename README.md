@@ -25,8 +25,7 @@
 ## To Do
 
 * ✅ Implement PoC;
-* ⬜️ Write tests for basic functional;
-* ⬜️ Add encryption for user data.
+* ⬜️ Write tests for basic functional.
 
 
 [back to top](#table-of-contents)

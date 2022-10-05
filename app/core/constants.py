@@ -23,6 +23,7 @@ class CallbackCommands(ClassPropertyAllMixin):
     UPDATE_TIMEZONE = 'update_timezone'
     CANCEL_QUESTION = 'cancel_question'
     RESET_WORK_DATE = 'reset_work_date'
+    SELECT_YESTERDAY = 'select_yesterday'
     SHOW_FINISHED_TASKS = 'show_finished_tasks'
     SHOW_CALENDAR_HEATMAP = 'show_calendar_heatmap'
     SHOW_DETAILED_STATISTICS = 'show_detailed_statistics'

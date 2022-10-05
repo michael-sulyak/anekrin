@@ -65,7 +65,7 @@ class WorkLogsStats:
         for date, day_score in stats:
             self.add_day_score(score=day_score, date=date)
 
-    async def get_year_plot(self, *, year: int, for_user: models.User) -> tuple[str, io.BytesIO]:
+    async def generate_year_plot(self, *, year: int, for_user: models.User) -> tuple[str, io.BytesIO]:
         selected_work_date = for_user.get_selected_work_date()
         first_work_date = await self._get_first_work_date(for_user=for_user)
         start_year = datetime.date(year=year, month=1, day=1)

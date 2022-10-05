@@ -68,19 +68,25 @@ class ChooseDate(BaseHandler):
 
     async def handle(self) -> None:
         user_manager = UserManager(user=self.message.from_user)
-        current_date = datetime.date.today().isoformat()
+        today_in_user_tz = user_manager.user.get_today_in_user_tz()
 
         await user_manager.wait_answer_for(QuestionTypes.SET_WORK_DATE)
 
         await self.message.answer(
             (
-                f'Enter a date to edit the data \\(for example, `{current_date}`\\)\\.\n'
+                f'Enter a date to edit the data \\(for example, `{today_in_user_tz}`\\)\\.\n'
                 f'{emojize(":warning:")} Don\'t forget to reset the date after data editing\\.'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [get_btn_for_reset_work_date()],
+                    [
+                        InlineKeyboardButton(
+                            f'{emojize(":BACK_arrow:")} Select yesterday',
+                            callback_data=CallbackCommands.SELECT_YESTERDAY,
+                        ),
+                    ],
                     [get_btn_for_cancel_question('Cancel date selection')],
                 ],
             ),
@@ -197,4 +203,18 @@ class ResetWorkDate(BaseHandler):
 
         await self.message.answer(
             f'Successfully reset {emojize(":thumbs_up:")}',
+        )
+
+
+class SelectYesterday(BaseHandler):
+    name = CallbackCommands.SELECT_YESTERDAY
+    type = HandlerTypes.CALLBACK_QUERY
+
+    async def handle(self, *args) -> None:
+        user_manager = UserManager(user=self.message.from_user)
+        today_in_user_tz = user_manager.user.get_today_in_user_tz()
+        await user_manager.set_work_date(today_in_user_tz - datetime.timedelta(days=1))
+
+        await self.message.answer(
+            f'Successfully selected yesterday {emojize(":thumbs_up:")}',
         )

@@ -680,7 +680,7 @@ class ShowCalendarHeatmap(BaseHandler):
     async def handle(self) -> None:
         year = self.message.from_user.get_selected_work_date().year
         work_logs_stats = WorkLogsStats()
-        file_name, buffer = await work_logs_stats.get_year_plot(year=year, for_user=self.message.from_user)
+        file_name, buffer = await work_logs_stats.generate_year_plot(year=year, for_user=self.message.from_user)
 
         await self.message.answer_document(
             TelegramInputFile(buffer, filename=file_name),
@@ -709,7 +709,7 @@ class ShowDetailedStats(BaseHandler):
             return
 
         for year in years_with_work_logs:
-            file_name, buffer = await work_logs_stats.get_year_plot(year=year, for_user=self.message.from_user)
+            file_name, buffer = await work_logs_stats.generate_year_plot(year=year, for_user=self.message.from_user)
             work_logs_stats.reset()
             await self.message.answer_document(TelegramInputFile(buffer, filename=file_name))
 

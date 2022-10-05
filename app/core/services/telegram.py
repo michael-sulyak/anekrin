@@ -50,6 +50,7 @@ class TelegramMessageHandler:
         handlers_for_users.UpdateTZ,
         handlers_for_users.AnswerWithTZ,
         handlers_for_users.ResetWorkDate,
+        handlers_for_users.SelectYesterday,
         handlers_for_users.SetWorkDate,
 
         handlers_for_common_usage.Start,

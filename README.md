@@ -1,4 +1,4 @@
-# aiohttp-rpc
+# Anekrin
 
 [![Scrutinizer Code Quality](https://img.shields.io/scrutinizer/g/expert-m/anekrin.svg?style=flat)](https://scrutinizer-ci.com/g/expert-m/anekrin/?branch=master)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/expert-m/anekrin.svg?style=flat)](https://lgtm.com/projects/g/expert-m/anekrin/alerts/)

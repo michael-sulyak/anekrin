@@ -347,7 +347,7 @@ class ChangeTaskReward(BaseHandlerForTaskFieldUpdating):
             (
                 f'You want to update the task reward:\n'
                 f'`{escape_md(task.name)}`\n\n'
-                f'Enter the new task reward (0-{constants.TARGET_NUMBER}):'
+                f'Enter the new task reward \\(0\\-{constants.TARGET_NUMBER}\\):'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
             reply_markup=get_reply_for_cancel_question(),

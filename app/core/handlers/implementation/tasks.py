@@ -760,7 +760,7 @@ class ExportData(BaseHandler):
     name = CallbackCommands.EXPORT_DATA
     type = HandlerTypes.CALLBACK_QUERY
 
-    @with_throttling(datetime.timedelta(hours=12))
+    @with_throttling(datetime.timedelta(hours=3))
     async def handle(self) -> None:
         task_manager = TaskManager(user=self.message.from_user)
         exported_data = await task_manager.export_data()

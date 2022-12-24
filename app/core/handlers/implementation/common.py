@@ -41,21 +41,34 @@ class Help(BaseHandler):
     async def handle(self) -> None:
         await self.message.answer(
             (
-                '*Anekrin* is a simple task manager for evaluating daily personal performance in routine tasks\\.\n\n'
+                '*Anekrin* is an easy\\-to\\-use personal productivity tracker that helps you stay on top of '
+                'your daily tasks and goals\\. With *Anekrin*, you can create a list of tasks and set rewards '
+                'for each one, track your progress over the last seven days, and strive to keep your *"average"* '
+                'productivity score at 100\\. *Anekrin* is the perfect companion for anyone looking to improve their '
+                'daily routine and reach their goals\\.\n\n'
+                'Try *Anekrin* today and see the difference it can make in your life\\!\n\n'
+                
                 f'*{emojize(":chequered_flag:")} How to start?*\n\n'
+                
                 f'*{emojize(":keycap_1:")} Create a list of tasks on which you evaluate your performance\\.*\n'
-                'For example: `Watch one video lesson`, `Go to the gym`, etc\\.\n\n'
+                'For example: "Watch one video lesson", "Go to the gym", etc\\.'
+                '\\(It\'s better not to create more than 20 tasks\\. '
+                'And when compiling a list of tasks, choose the most important ones\\.\\)\n\n'
+                
                 f'*{emojize(":keycap_2:")} Set a reward for each task\\.*\n'
-                f'Every day you should aim to get {TARGET_NUMBER} scores\\.\n'
-                'For example: I worked in the office yesterday \\(\\+50\\), '
-                'read a book a little \\(\\+20\\), went for a walk \\(\\+30\\)\\.\n'
+                f'Every day you should aim to get {TARGET_NUMBER} scores\\. '
+                'For example, I worked in the office yesterday \\(\\+50\\), '
+                'read a book a little \\(\\+20\\), went for a walk \\(\\+30\\)\\. '
                 'And tomorrow, instead of a walk, I watched a video lesson \\(\\+30\\) and as a result, '
                 'it also turned out to be a productive day\\.\n\n'
+                
                 f'*{emojize(":keycap_3:")} Strive to have *"average"* equal to 100\\.*\n'
                 'This is the sum of accumulated scores for 7 days divided by 7\\.\n'
                 'Why? Because one day your productivity can be low, and the next day it can be high\\. '
-                'As a result, it is more useful to know the *"average"* for the last seven days\\.\n\n'
-                f'*Now just try it* {emojize(":winking_face:")}'
+                'As a result, it is more useful to know the *"average"* for the last days\\.\n\n'
+                
+                f'With these steps, you can easily get started with *Anekrin* and start tracking your '
+                f'productivity today\\!'
             ),
             parse_mode=ParseMode.MARKDOWN_V2,
         )

@@ -22,20 +22,26 @@ class TaskManager:
 
     async def create_samples(self) -> None:
         await create_task(
-            name=f'{emojize(":person_lifting_weights:")} Do exercises',
+            name=f'{emojize(":person_in_lotus_position:")} Meditate or practice mindfulness',
+            reward=10,
+            owner=self.user,
+        )
+
+        await create_task(
+            name=f'{emojize(":open_book:")} Read or listen to a book',
             reward=20,
             owner=self.user,
         )
 
         await create_task(
-            name=f'{emojize(":person_walking:")} Take a walk',
-            reward=15,
+            name=f'{emojize(":memo:")} Review your to-do list',
+            reward=10,
             owner=self.user,
         )
 
         task = await create_task(
             name=f'{emojize(":mobile_phone:")} Open the bot',
-            reward=15,
+            reward=25,
             owner=self.user,
         )
 

@@ -5,7 +5,8 @@
 [![GitHub Issues](https://img.shields.io/github/issues/expert-m/anekrin.svg?style=flat)](https://github.com/expert-m/anekrin/issues)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](https://choosealicense.com/licenses/apache-2.0/)
 
-> Anekrin is a simple task manager for evaluating personal performance.
+> Anekrin is an easy-to-use personal productivity tracker that helps you stay on top of your daily tasks and goals. With Anekrin, you can create a list of tasks and set rewards for each one, track your progress over the last seven days, and strive to keep your "average" productivity score at 100. Anekrin is the perfect companion for anyone looking to improve their daily routine and reach their goals. 
+> Try Anekrin today and see the difference it can make in your life!
 
 ## Table Of Contents
 - **[Introduction](#Introduction)**

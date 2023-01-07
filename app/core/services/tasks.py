@@ -126,8 +126,8 @@ class TaskManager:
             })
 
         return {
-            'tasks.json': json.dumps(tasks_info, ensure_ascii=False, indent=2),
-            'work_logs.json': json.dumps(work_logs_info, ensure_ascii=False, indent=2),
+            'Anekrin - Tasks.json': json.dumps(tasks_info, ensure_ascii=False, indent=2),
+            'Anekrin - Work logs.json': json.dumps(work_logs_info, ensure_ascii=False, indent=2),
         }
 
     async def import_work_logs(self, data: dict[list[dict[str, typing.Any]]]) -> None:

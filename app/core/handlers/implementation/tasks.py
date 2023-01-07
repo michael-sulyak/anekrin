@@ -708,7 +708,7 @@ class ShowDetailedStats(BaseHandler):
             await self.message.answer_document(f'No more data {emojize(":sad_but_relieved_face:")}')
             return
 
-        for year in years_with_work_logs:
+        for year in reversed(years_with_work_logs):
             file_name, buffer = await work_logs_stats.generate_year_plot(year=year, for_user=self.message.from_user)
             work_logs_stats.reset()
             await self.message.answer_document(TelegramInputFile(buffer, filename=file_name))

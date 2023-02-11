@@ -28,7 +28,7 @@ async def test_start() -> None:
         ),
         ExpectedCall(
             name='answer',
-            args__0__contains='*Anekrin* is a simple task manager for evaluating personal performance\\.',
+            args__0__contains='*Anekrin* is an easy\\-to\\-use personal productivity tracker that helps you',
             args__len=1,
         ),
         ExpectedCall(
@@ -44,4 +44,4 @@ async def test_start() -> None:
     ).compare_with(calls)
 
     assert await models.User.filter(telegram_user_id=sender['id']).exists()
-    assert await models.Task.filter(owner__telegram_user_id=sender['id']).count() == 3
+    assert await models.Task.filter(owner__telegram_user_id=sender['id']).count() == 4

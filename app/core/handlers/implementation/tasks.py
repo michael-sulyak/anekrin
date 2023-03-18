@@ -13,6 +13,7 @@ from emoji.core import emojize
 
 from ..base import BaseHandler
 from ..constants import HandlerTypes
+from ..utils.for_answers import get_text_complete_button
 from ..utils.throttling import with_throttling
 from ... import constants
 from ...constants import BotCommand, CallbackCommands, ParseModes, QuestionTypes
@@ -85,17 +86,9 @@ class ShowTasks(BaseHandler):
         await self.message.answer('Your current tasks:')
 
         for task in tasks:
-            if task.count_of_work_logs_for_current_date > 0:
-                button_text = f'{emojize(":check_mark_button:")} Complete'
-
-                if task.count_of_work_logs_for_current_date > 1:
-                    button_text += f' ({task.count_of_work_logs_for_current_date})'
-            else:
-                button_text = f'{emojize(":check_box_with_check:")} Complete'
-
             inline_keyboard = [[
                 InlineKeyboardButton(
-                    button_text,
+                    get_text_complete_button(task.count_of_work_logs_for_current_date),
                     callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
                 ),
                 InlineKeyboardButton(
@@ -173,6 +166,20 @@ class CompleteTask(BaseHandler):
         task = await task_manager.get_task(task_id)
 
         result = await task_manager.mark_task_as_completed(task_id=task_id)
+        count_of_work_logs = await task_manager.get_count_of_work_logs_for_current_date(task_id=task_id)
+
+        await self.message.edit_reply_markup(
+            InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(
+                    get_text_complete_button(count_of_work_logs),
+                    callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
+                ),
+                InlineKeyboardButton(
+                    f'{emojize(":pencil:")} Edit',
+                    callback_data=f'{CallbackCommands.EDIT_TASK} {task.id}',
+                ),
+            ]]),
+        )
 
         work_date = self.message.from_user.get_selected_work_date()
 
@@ -184,19 +191,6 @@ class CompleteTask(BaseHandler):
 
         day_score = work_logs_stats.get_day_score(work_date)
         week_average = work_logs_stats.get_week_average(work_date)
-
-        await self.message.edit_reply_markup(
-            InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(
-                    f'{emojize(":check_mark_button:")} Complete',
-                    callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
-                ),
-                InlineKeyboardButton(
-                    f'{emojize(":pencil:")} Edit',
-                    callback_data=f'{CallbackCommands.EDIT_TASK} {task.id}',
-                ),
-            ]]),
-        )
 
         await self.message.answer(
             (

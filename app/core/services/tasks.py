@@ -249,6 +249,12 @@ class TaskManager:
             'position',
         ))
 
+    async def get_count_of_work_logs_for_current_date(self, *, task_id: int) -> int:
+        return await models.WorkLog.filter(
+            task_id=task_id,
+            date=self.user.get_selected_work_date(),
+        ).count()
+
     async def get_tasks_with_last_work_log_date(self) -> typing.Tuple[models.Task, ...]:
         return tuple(await models.Task.filter(
             owner=self.user,

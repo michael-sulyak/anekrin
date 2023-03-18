@@ -38,12 +38,13 @@ class ExpectedCall:
             assert params['args'] == call.args
             del params['args']
 
-        for i in range(5):
+        for i in range(len(call.args)):
+            key_for_checking = f'args__{i}__contains'
             # Simple implementation. We don't need to check a lot of args.
-            if f'args__{i}__contains' in params:
-                assert params[f'args__{i}__contains'] in call.args[0], \
-                    f'{call.args[0]=} doesn\'t contain {params[f"args__{i}__contains"]=}'
-                del params[f'args__{i}__contains']
+            if key_for_checking in params:
+                assert params[key_for_checking] in call.args[i], \
+                    f'{call.args[i]=} doesn\'t contain {params[key_for_checking]=}'
+                del params[key_for_checking]
 
         if 'args__len' in params:
             assert params['args__len'] == len(call.args)
@@ -60,6 +61,12 @@ class ExpectedCall:
         if 'kwargs__keys' in params:
             assert set(params['kwargs__keys']) == set(call.kwargs)
             del params['kwargs__keys']
+
+        for key, value in call.kwargs.items():
+            key_for_checking = f'kwargs__{key}'
+            if key_for_checking in params:
+                assert params[key_for_checking] == value, f'{value=} doesn\'t equal to {params[key_for_checking]=}'
+                del params[key_for_checking]
 
         assert not params
 

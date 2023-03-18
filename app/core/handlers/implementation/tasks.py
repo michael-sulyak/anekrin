@@ -58,7 +58,7 @@ class ShowTasks(BaseHandler):
     async def handle(self) -> None:
         task_manager = TaskManager(user=self.message.from_user)
 
-        tasks = await task_manager.get_tasks_with_last_work_log_date()
+        tasks = await task_manager.get_tasks_with_count_of_work_logs()
 
         if self.message.from_user.selected_work_date:
             await self.message.answer(
@@ -84,17 +84,18 @@ class ShowTasks(BaseHandler):
 
         await self.message.answer('Your current tasks:')
 
-        selected_work_date = self.message.from_user.get_selected_work_date()
-
         for task in tasks:
-            is_completed = task.last_work_log_date == selected_work_date
+            if task.count_of_work_logs_for_current_date > 0:
+                button_text = f'{emojize(":check_mark_button:")} Complete'
+
+                if task.count_of_work_logs_for_current_date > 1:
+                    button_text += f' ({task.count_of_work_logs_for_current_date})'
+            else:
+                button_text = f'{emojize(":check_box_with_check:")} Complete'
 
             inline_keyboard = [[
                 InlineKeyboardButton(
-                    (
-                        f'{emojize(":check_mark_button:") if is_completed else emojize(":check_box_with_check:")} '
-                        f'Complete'
-                    ),
+                    button_text,
                     callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
                 ),
                 InlineKeyboardButton(

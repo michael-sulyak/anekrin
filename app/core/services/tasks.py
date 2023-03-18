@@ -5,6 +5,7 @@ import typing
 from collections import defaultdict
 
 from emoji.core import emojize
+from tortoise.expressions import RawSQL
 from tortoise.functions import Max
 
 from . import utils
@@ -229,6 +230,21 @@ class TaskManager:
     async def get_tasks(self) -> typing.Tuple[models.Task, ...]:
         return tuple(await models.Task.filter(
             owner=self.user,
+        ).order_by(
+            'position',
+        ))
+
+    async def get_tasks_with_count_of_work_logs(self) -> typing.Tuple[models.Task, ...]:
+        return tuple(await models.Task.filter(
+            owner=self.user,
+        ).annotate(
+            count_of_work_logs_for_current_date=RawSQL(
+                f'(SELECT COUNT(*) '
+                f'FROM "{models.WorkLog._meta.db_table}" '
+                f'WHERE "{models.WorkLog._meta.db_table}"."task_id" = "{models.Task._meta.db_table}"."id" '
+                f'AND "{models.WorkLog._meta.db_table}"."date" = '
+                f'\'{self.user.get_selected_work_date().isoformat()}\'::date)'
+            ),
         ).order_by(
             'position',
         ))

@@ -1,2 +1,0 @@
--- upgrade --
-ALTER TABLE "task" ADD "created_at" TIMESTAMPTZ NOT NULL  DEFAULT CURRENT_TIMESTAMP;

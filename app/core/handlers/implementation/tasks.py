@@ -13,7 +13,7 @@ from emoji.core import emojize
 
 from ..base import BaseHandler
 from ..constants import HandlerTypes
-from ..utils.for_answers import get_text_complete_button
+from ..utils.for_answers import get_text_complete_button, get_text_for_new_day_bonus
 from ..utils.throttling import with_throttling
 from ... import constants
 from ...constants import BotCommand, CallbackCommands, ParseModes, QuestionTypes
@@ -202,10 +202,9 @@ class CompleteTask(BaseHandler):
 
         day_bonus = result['day_bonus']
 
-        if day_bonus > 0:
+        if day_bonus != 0:
             await self.message.answer(
-                f'You just received a bonus\\ {emojize(":party_popper:")}\n'
-                f'*\\+{day_bonus}* score{" " if day_bonus == 0 else "s"} for tomorrow\\!',
+                get_text_for_new_day_bonus(day_bonus),
                 parse_mode=ParseModes.MARKDOWN_V2,
             )
 
@@ -342,7 +341,7 @@ class ChangeTaskReward(BaseHandlerForTaskFieldUpdating):
             (
                 f'You want to update the task reward:\n'
                 f'`{escape_md(task.name)}`\n\n'
-                f'Enter the new task reward \\(0\\-{constants.TARGET_NUMBER}\\):'
+                f'Enter the new task reward:'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
             reply_markup=get_reply_for_cancel_question(),
@@ -520,9 +519,9 @@ class AnswerWithNewTaskReward(BaseHandler):
     async def handle(self, task_reward: str, task_id: str) -> None:
         task_id = int(task_id)
 
-        if task_reward.isdigit():
+        try:
             task_reward = int(task_reward)
-        else:
+        except ValueError:
             await self.message.answer(
                 f'`{escape_md(task_reward)}` is invalid value\\.',
                 parse_mode=ParseModes.MARKDOWN_V2,
@@ -724,9 +723,14 @@ class DeleteWorkLog(BaseHandler):
             await self.message.answer_error(e)
         else:
             await self.message.answer(f'Successfully removed {emojize(":thumbs_up:")}')
-
-            if result['day_bonus'] < 0:
-                await self.message.answer(f'Some bonuses have been taken away {emojize(":sad_but_relieved_face:")}')
+            
+            day_bonus = result['day_bonus']
+            
+            if day_bonus != 0:
+                await self.message.answer(
+                    get_text_for_new_day_bonus(day_bonus),
+                    parse_mode=ParseModes.MARKDOWN_V2,
+                )
 
 
 class ImportWorkLogs(BaseHandler):

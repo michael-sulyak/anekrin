@@ -320,15 +320,19 @@ description = "Calendar heatmaps from Pandas time series data"
 category = "main"
 optional = false
 python-versions = "*"
-files = [
-    {file = "calmap-0.0.9-py2.py3-none-any.whl", hash = "sha256:24ff083fb91232ecc6cd6c17cc32cdfb97c6f20b040503bb6c9e7fd82722699f"},
-    {file = "calmap-0.0.9.tar.gz", hash = "sha256:b16326be5dca3951930a76b6257512362a457ecd688c5e2a991d03282c5f9b3f"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 matplotlib = "*"
 numpy = "*"
 pandas = "*"
+
+[package.source]
+type = "git"
+url = "https://github.com/expert-m/calmap.git"
+reference = "HEAD"
+resolved_reference = "e2a83220af79aca37794f6d8f8a41f7940646669"
 
 [[package]]
 name = "certifi"
@@ -1569,4 +1573,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "78eb30fa68f3df18c0c0c0e131b27dc3f444bbbbf48c505cdc09d2a699a4fade"
+content-hash = "941aad557feb7d5911a805a672727c0e7ace3e54085c5575ec76ca70c8869dcd"

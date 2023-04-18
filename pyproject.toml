@@ -16,8 +16,8 @@ emoji = "^2.1.0"
 sentry-sdk = "^1.5.6"
 numpy = "^1.22.3"
 pandas = "^2.0.0"
-calmap = "^0.0.9"
 mplcyberpunk = "^0.6.0"
+calmap = {git = "https://github.com/expert-m/calmap.git"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.1"

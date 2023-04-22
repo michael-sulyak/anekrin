@@ -77,8 +77,8 @@ def get_emojize_for_score(score: int) -> str:
 def get_day_performance_info(*, day_score: int, week_average: int) -> str:
     return (
         f'*Performance:*\n'
-        f'{emojize(":coin:")} *Today:* `{day_score}` {get_emojize_for_score(day_score)}\n'
-        f'{emojize(":trophy:")} *Average:* `{week_average}` {get_emojize_for_score(week_average)}'
+        f'{emojize(":calendar:")} *Today:* `{day_score}` {get_emojize_for_score(day_score)}\n'
+        f'{emojize(":spiral_calendar:")} *Average:* `{week_average}` {get_emojize_for_score(week_average)}'
     )
 
 

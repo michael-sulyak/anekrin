@@ -70,7 +70,7 @@ class ShowTasks(BaseHandler):
         inline_markup_for_creating = InlineKeyboardMarkup(
             inline_keyboard=[[
                 InlineKeyboardButton(
-                    f'{emojize(":plus:")} Create a task',
+                    f'{emojize(":plus:")} Add task',
                     callback_data=CallbackCommands.CREATE_TASK,
                 ),
             ]],
@@ -105,14 +105,7 @@ class ShowTasks(BaseHandler):
 
         await self.message.answer(
             'Or do you want to do something else?',
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[[
-                    InlineKeyboardButton(
-                        f'{emojize(":plus:")} Create a task',
-                        callback_data=CallbackCommands.CREATE_TASK,
-                    ),
-                ]],
-            ),
+            reply_markup=inline_markup_for_creating,
         )
 
 

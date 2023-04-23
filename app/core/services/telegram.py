@@ -20,16 +20,25 @@ from ..utils import send_not_found, send_not_found_for_question
 
 
 class TelegramMessageHandler:
-    available_handler_classes: typing.Tuple[typing.Type[BaseHandler], ...] = (
+    available_handler_classes: tuple[typing.Type[BaseHandler], ...] = (
         handlers_for_tasks.ShowTasks,
+        handlers_for_tasks.ShowTasksInCategory,
         handlers_for_tasks.ShowFinishedTask,
-        handlers_for_tasks.DeleteTask,
         handlers_for_tasks.CompleteTask,
         handlers_for_tasks.CreateTask,
         handlers_for_tasks.EditTask,
+        handlers_for_tasks.DeleteTask,
+        handlers_for_tasks.CreateCategory,
+        handlers_for_tasks.DeleteCategory,
+        handlers_for_tasks.ChangeCategoryName,
+        handlers_for_tasks.ChangeTaskCategory,
+        handlers_for_tasks.SetTaskCategory,
+        handlers_for_tasks.EditCategory,
         handlers_for_tasks.ShowStats,
         handlers_for_tasks.DeleteWorkLog,
         handlers_for_tasks.AnswerWithNameForNewTask,
+        handlers_for_tasks.AnswerWithNameForNewCategory,
+        handlers_for_tasks.AnswerWithNewNameForCategory,
         handlers_for_tasks.AnswerWithNewTaskReward,
         handlers_for_tasks.AnswerWithNewNameForTask,
         handlers_for_tasks.ChangeTaskReward,

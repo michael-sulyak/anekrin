@@ -42,6 +42,23 @@ class User(Model):
         return now.astimezone(zoneinfo.ZoneInfo(self.timezone)).date()
 
 
+class Category(Model):
+    id = fields.BigIntField(
+        pk=True,
+    )
+    name = fields.TextField()
+    owner: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        model_name='models.User',
+        related_name='categories',
+        index=True,
+    )
+
+    class Meta:
+        indexes = (
+            UniqueTogether(fields={'owner_id', 'name'}, is_deferrable_initially_immediate=True),
+        )
+
+
 class Task(Model):
     id = fields.BigIntField(
         pk=True,
@@ -50,6 +67,14 @@ class Task(Model):
     owner: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         model_name='models.User',
         related_name='tasks',
+        index=True,
+    )
+    category: fields.ForeignKeyRelation[Category] = fields.ForeignKeyField(
+        model_name='models.Category',
+        related_name='tasks',
+        on_delete=fields.SET_NULL,
+        null=True,
+        index=True,
     )
     position = fields.IntField()
     reward = fields.IntField()
@@ -87,12 +112,14 @@ class WorkLog(Model):
         related_name='work_logs',
         on_delete=fields.SET_NULL,
         null=True,
+        index=True,
     )
     name = fields.TextField()
     date = fields.DateField()
     owner: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         model_name='models.User',
         related_name='work_logs',
+        index=True,
     )
     reward = fields.IntField()
 

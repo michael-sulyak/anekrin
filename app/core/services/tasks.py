@@ -12,7 +12,7 @@ from . import utils
 from .. import constants
 from ..exceptions import ValidationError
 from ... import models
-from ...models.utils import create_task, create_work_log, lock_by_user
+from ...models.utils import lock_by_user, get_first
 
 
 class TaskManager:
@@ -21,29 +21,65 @@ class TaskManager:
     def __init__(self, *, user: models.User) -> None:
         self.user = user
 
+    async def create_task(self, *, name: str, reward: int) -> models.Task:
+        async with lock_by_user(self.user.id):
+            has_task_with_the_same_name = await models.Task.filter(
+                name=name,
+                owner=self.user,
+            ).exists()
+
+            if has_task_with_the_same_name:
+                raise ValidationError('You already have a task with this name')
+
+            max_position = await get_first(models.Task.filter(
+                owner=self.user,
+            ).order_by(
+                '-position',
+            ).values_list(
+                'position',
+                flat=True,
+            ))
+
+            if max_position is None:
+                max_position = 0
+
+            return await models.Task.create(
+                name=name,
+                owner=self.user,
+                position=max_position + 1,
+                reward=reward,
+            )
+
+    async def create_work_log(self, *, task: models.Task) -> models.WorkLog:
+        assert task.owner.id == self.user.id
+
+        return await models.WorkLog.create(
+            task=task,
+            name=task.name,
+            owner=task.owner,
+            date=task.owner.get_selected_work_date(),
+            reward=task.reward,
+        )
+
     async def create_samples(self) -> None:
-        await create_task(
+        await self.create_task(
             name=f'{emojize(":person_in_lotus_position:")} Meditate or practice mindfulness',
             reward=10,
-            owner=self.user,
         )
 
-        await create_task(
+        await self.create_task(
             name=f'{emojize(":open_book:")} Read or listen to a book',
             reward=20,
-            owner=self.user,
         )
 
-        await create_task(
+        await self.create_task(
             name=f'{emojize(":memo:")} Review your to-do list',
             reward=10,
-            owner=self.user,
         )
 
-        task = await create_task(
+        task = await self.create_task(
             name=f'{emojize(":mobile_phone:")} Open the bot',
             reward=25,
-            owner=self.user,
         )
 
         await self.mark_task_as_completed(task_id=task.id)
@@ -52,6 +88,8 @@ class TaskManager:
         task = await models.Task.get(
             id=task_id,
             owner=self.user,
+        ).prefetch_related(
+            'category',
         )
         task.owner = self.user  # To prevent the query
         return task
@@ -63,6 +101,7 @@ class TaskManager:
             data = tuple(
                 {
                     'name': task.name,
+                    'category': task.category.name if task.category else None,
                     'reward': task.reward,
                 }
                 for task in tasks
@@ -71,11 +110,12 @@ class TaskManager:
             data = (
                 {
                     'name': 'Do exercises',
+                    'category': 'Sport',
                     'reward': 20,
                 },
                 {
                     'name': 'Take a walk',
-                    'reward': 30,
+                    'reward': None,
                 },
             )
 
@@ -98,14 +138,16 @@ class TaskManager:
         return json.dumps(data, ensure_ascii=False, indent=2)
 
     async def export_data(self) -> dict[str, str]:
-        tasks_info = tuple(await models.Task.filter(
-            owner=self.user,
-        ).order_by(
-            'position',
-        ).values(
-            'name',
-            'reward',
-        ))
+        tasks = await self.get_tasks()
+
+        tasks_info = tuple(
+            {
+                'name': task.name,
+                'category': task.category.name if task.category else None,
+                'reward': task.reward,
+            }
+            for task in tasks
+        )
 
         work_logs_info = defaultdict(list)
 
@@ -162,12 +204,18 @@ class TaskManager:
             raise ValidationError('JSON is invalid.')
 
         async with lock_by_user(self.user.id):
+            await utils.rewrite_current_user_categories(tasks_info, for_user=self.user)
             await utils.rewrite_current_user_tasks(tasks_info, for_user=self.user)
 
     @staticmethod
     async def update_task_name(*, task: models.Task, new_name: str) -> None:
         task.name = new_name
         await task.save(update_fields=('name',))
+
+    @staticmethod
+    async def update_task_category(*, task: models.Task, new_category: models.Category) -> None:
+        task.category = new_category
+        await task.save(update_fields=('category_id',))
 
     @staticmethod
     async def update_task_reward(*, task: models.Task, new_reward: int) -> None:
@@ -227,14 +275,16 @@ class TaskManager:
 
             await models.Task.bulk_update(tasks, fields=('position',))
 
-    async def get_tasks(self) -> typing.Tuple[models.Task, ...]:
+    async def get_tasks(self) -> tuple[models.Task, ...]:
         return tuple(await models.Task.filter(
             owner=self.user,
         ).order_by(
             'position',
+        ).prefetch_related(
+            'category',
         ))
 
-    async def get_tasks_with_count_of_work_logs(self) -> typing.Tuple[models.Task, ...]:
+    async def get_tasks_with_count_of_work_logs(self) -> tuple[models.Task, ...]:
         return tuple(await models.Task.filter(
             owner=self.user,
         ).annotate(
@@ -255,7 +305,7 @@ class TaskManager:
             date=self.user.get_selected_work_date(),
         ).count()
 
-    async def get_tasks_with_last_work_log_date(self) -> typing.Tuple[models.Task, ...]:
+    async def get_tasks_with_last_work_log_date(self) -> tuple[models.Task, ...]:
         return tuple(await models.Task.filter(
             owner=self.user,
         ).annotate(
@@ -276,7 +326,7 @@ class TaskManager:
 
             task.owner = self.user  # To prevent a query
 
-            work_log = await create_work_log(task=task)
+            work_log = await self.create_work_log(task=task)
 
             day_bonus = await utils.recalculate_day_bonus(date=work_log.date, user=self.user)
 
@@ -284,7 +334,7 @@ class TaskManager:
             'day_bonus': day_bonus,
         }
 
-    async def get_work_logs(self, *, type_: typing.Optional[str] = None) -> typing.Tuple[models.WorkLog, ...]:
+    async def get_work_logs(self, *, type_: typing.Optional[str] = None) -> tuple[models.WorkLog, ...]:
         additional_filter = {}
 
         if type_ is not None:

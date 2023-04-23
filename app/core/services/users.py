@@ -17,7 +17,7 @@ class UserManager:
         self.user = user
 
     @classmethod
-    async def get_user_by_telegram_user(cls, telegram_user: TelegramUser) -> typing.Tuple[models.User, bool]:
+    async def get_user_by_telegram_user(cls, telegram_user: TelegramUser) -> tuple[models.User, bool]:
         if telegram_user.is_bot:
             raise ValidationError('It\'s the bot')
 

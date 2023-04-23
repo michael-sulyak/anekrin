@@ -3,12 +3,12 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from emoji import emojize
 
 from ....constants import BotCommand, CallbackCommands
+from ....services.tasks import TaskManager
 from ....services.telegram import TelegramMessageHandler
 from ....tests.utils import create_mocked_class_for_message
 from ..... import models
 from .....common.tests.dto import ExpectedCall, ExpectedCalls
 from .....common.tests.utils import generate_random_raw_user, generate_random_string, generate_telegram_update_for_text
-from .....models.utils import create_task, create_work_log
 
 
 @pytest.mark.asyncio
@@ -39,10 +39,11 @@ async def test_show_tasks_without_tasks() -> None:
 async def test_show_tasks() -> None:
     sender = generate_random_raw_user()
     user = await models.User.create(telegram_user_id=sender['id'])
-    first_task = await create_task(name=generate_random_string(10), reward=20, owner=user)
-    second_task = await create_task(name=generate_random_string(10), reward=20, owner=user)
-    await create_work_log(task=second_task)
-    await create_work_log(task=second_task)
+    task_manager = TaskManager(user=user)
+    first_task = await task_manager.create_task(name=generate_random_string(10), reward=20)
+    second_task = await task_manager.create_task(name=generate_random_string(10), reward=20)
+    await task_manager.create_work_log(task=second_task)
+    await task_manager.create_work_log(task=second_task)
 
     telegram_update = generate_telegram_update_for_text(
         BotCommand.SHOW_TASKS,

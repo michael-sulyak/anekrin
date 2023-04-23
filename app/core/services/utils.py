@@ -79,6 +79,15 @@ async def recalculate_day_bonus(date: datetime.date, *, user: models.User, _max_
 async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user: models.User) -> None:
     # Note: Need to run with lock by a user
 
+    current_categories = tuple(await models.Category.filter(
+        owner=for_user,
+    ))
+
+    map_of_current_categories = {
+        current_category.name: current_category
+        for current_category in current_categories
+    }
+
     current_tasks = tuple(await models.Task.filter(
         owner=for_user,
     ))
@@ -96,6 +105,7 @@ async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user:
     for position, task_info in enumerate(tasks_info, 1):
         task_name = task_info['name']
         task_reward = task_info['reward']
+        task_category_name = task_info['category']
 
         if task_name in proceed_task_names:
             raise ValidationError(f'`{escape_md(task_name)}` is duplicated\\.', is_markdown=True)
@@ -106,6 +116,7 @@ async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user:
             task = map_of_current_tasks[task_name]
             task.position = position
             task.reward = task_reward
+            task.category = map_of_current_categories.get(task_category_name)
             tasks_to_update.append(task)
         else:
             tasks_to_create.append(models.Task(
@@ -113,6 +124,7 @@ async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user:
                 owner=for_user,
                 position=position,
                 reward=task_reward,
+                category=map_of_current_categories.get(task_category_name),
             ))
 
     task_ids_to_delete = set(task.id for task in current_tasks) - set(task.id for task in tasks_to_update)
@@ -125,10 +137,50 @@ async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user:
     if tasks_to_update:
         await models.Task.bulk_update(
             tasks_to_update,
-            fields=('position', 'reward',),
+            fields=('position', 'reward', 'category_id',),
         )
 
     if tasks_to_create:
         await models.Task.bulk_create(
             tasks_to_create,
+        )
+
+
+async def rewrite_current_user_categories(tasks_info: typing.List[dict], *, for_user: models.User) -> None:
+    # Note: Need to run with lock by a user
+
+    current_categories = tuple(await models.Category.filter(
+        owner=for_user,
+    ))
+
+    current_category_names = set(
+        current_category.name
+        for current_category in current_categories
+    )
+
+    new_category_names = set(
+        task_info['category']
+        for task_info in tasks_info
+    )
+
+    categories_to_create = tuple(
+        models.Category(name=new_category_name, owner=for_user)
+        for new_category_name in new_category_names
+        if new_category_name is not None and new_category_name not in current_category_names
+    )
+
+    category_ids_to_delete = tuple(
+        current_category.id
+        for current_category in current_categories
+        if current_category.name not in new_category_names
+    )
+
+    if category_ids_to_delete:
+        await models.Category.filter(
+            id__in=category_ids_to_delete,
+        ).delete()
+
+    if categories_to_create:
+        await models.Category.bulk_create(
+            categories_to_create,
         )

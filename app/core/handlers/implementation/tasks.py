@@ -63,9 +63,12 @@ class ShowTasks(BaseHandler):
 
         tasks = await task_manager.get_tasks_with_count_of_work_logs()
         show_tasks = True
+        selected_category_name = None
 
         if selected_category_id:
-            if selected_category_id == 'other':
+            if selected_category_id == 'all':
+                pass
+            elif selected_category_id == 'other':
                 selected_category_name = 'Other tasks'
                 tasks = tuple(
                     task
@@ -81,8 +84,6 @@ class ShowTasks(BaseHandler):
                     for task in tasks
                     if task.category_id == selected_category_id
                 )
-        else:
-            selected_category_name = None
 
         if self.message.from_user.selected_work_date:
             await self.message.answer(
@@ -114,13 +115,11 @@ class ShowTasks(BaseHandler):
             categories = await category_manager.get_categories()
 
             if categories:
-                inline_keyboard_with_categories = [
-                    [
-                        InlineKeyboardButton(
-                            category.name,
-                            callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} {category.id}',
-                        ),
-                    ]
+                inline_keyboard_buttons_with_categories = [
+                    InlineKeyboardButton(
+                        category.name,
+                        callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} {category.id}',
+                    )
                     for category in categories
                 ]
 
@@ -130,27 +129,60 @@ class ShowTasks(BaseHandler):
                 )
 
                 if has_tasks_without_category:
-                    inline_keyboard_with_categories.append([
+                    inline_keyboard_buttons_with_categories.append(
                         InlineKeyboardButton(
-                            'Other',
+                            'Show other tasks',
                             callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} other',
                         ),
-                    ])
+                    )
+
+                inline_keyboard_buttons_with_categories.append(
+                    InlineKeyboardButton(
+                        'Show all tasks',
+                        callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} all',
+                    ),
+                )
 
                 await self.message.answer(
-                    'Choose a category:',
+                    f'{emojize(":file_folder:")} Categories',
                     reply_markup=InlineKeyboardMarkup(
-                        inline_keyboard=inline_keyboard_with_categories,
+                        inline_keyboard=[
+                            inline_keyboard_buttons_with_categories[i:i + 2]
+                            for i in range(0, len(inline_keyboard_buttons_with_categories), 2)
+                        ],
                     ),
                 )
 
                 show_tasks = False
 
         if show_tasks:
+            # inline_keyboard_with_tasks = [
+            #     [
+            #         InlineKeyboardButton(
+            #             (
+            #                 f'{get_short_text_complete_button(task.count_of_work_logs_for_current_date)} | '
+            #                 f'{task.name} ({task.str_reward})'
+            #             ),
+            #             callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
+            #         ),
+            #     ]
+            #     for task in tasks
+            # ]
+
             if selected_category_name is None:
-                await self.message.answer('Your current tasks:')
+                await self.message.answer(
+                    'Your current tasks:',
+                    # reply_markup=InlineKeyboardMarkup(
+                    #     inline_keyboard=inline_keyboard_with_tasks,
+                    # ),
+                )
             else:
-                await self.message.answer(f'Your current tasks in category "{selected_category_name}":')
+                await self.message.answer(
+                    selected_category_name,
+                    # reply_markup=InlineKeyboardMarkup(
+                    #     inline_keyboard=inline_keyboard_with_tasks,
+                    # ),
+                )
 
             for task in tasks:
                 inline_keyboard = [[
@@ -165,15 +197,16 @@ class ShowTasks(BaseHandler):
                 ]]
 
                 await self.message.answer(
-                    f'{task.position}\\. {escape_md(task.name)} `({task.str_reward})`',
+                    f'{escape_md(task.name)} `({task.str_reward})`',
                     parse_mode=ParseModes.MARKDOWN_V2,
                     reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_keyboard),
                 )
 
-        await self.message.answer(
-            'Or do you want to do something else?',
-            reply_markup=inline_markup_for_creating,
-        )
+        if selected_category_id is None:
+            await self.message.answer(
+                'Or do you want to do something else?',
+                reply_markup=inline_markup_for_creating,
+            )
 
 
 class ShowTasksInCategory(BaseHandler):
@@ -525,10 +558,23 @@ class ChangeTaskPosition(BaseHandler):
 
         task_id = int(task_id)
         tasks = await task_manager.get_tasks()
+        category_id = next(
+            task.category_id
+            for task in tasks
+            if task.id == task_id
+        )
+        tasks_with_specific_category_iter = (
+            task
+            for task in tasks
+            if task.category_id == category_id
+        )
 
-        answer = 'All tasks:\n'
-        for task in tasks:
-            task_info = f'{task.position}\\. `{escape_md(task.name)}`'
+        answer = '**Tasks:**\n'
+        for task_position, task in enumerate(tasks_with_specific_category_iter, 1):
+            if task.category_id != category_id:
+                continue
+
+            task_info = f'{task_position}\\. `{escape_md(task.name)}`'
 
             if task.id == task_id:
                 task_info = f'{emojize(":round_pushpin:")} *{task_info}*'
@@ -634,11 +680,28 @@ class AnswerWithNewTaskPosition(BaseHandler):
         task_manager = TaskManager(user=self.message.from_user)
 
         task_id = int(task_id)
-        task = await task_manager.get_task(task_id)
+        tasks = await task_manager.get_tasks()
+        target_task = next(
+            task
+            for task in tasks
+            if task.id == task_id
+        )
+        tasks_with_specific_category_iter = (
+            task
+            for task in tasks
+            if task.category_id == target_task.category_id
+        )
+
+        for relative_task_position, task in enumerate(tasks_with_specific_category_iter, 1):
+            if relative_task_position == new_task_position:
+                new_task_position = task.position
+                break
+        else:
+            new_task_position = len(tasks) + 1
 
         try:
             await task_manager.update_task_position(
-                task=task,
+                task=target_task,
                 new_task_position=new_task_position,
             )
         except ValidationError as e:

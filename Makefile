@@ -4,6 +4,9 @@ makemigrations:
 migrate:
 	aerich upgrade
 
+test:
+	pytest app
+
 bash:
 	docker-compose run --rm core bash
 

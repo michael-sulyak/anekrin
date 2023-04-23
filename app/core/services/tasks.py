@@ -225,11 +225,11 @@ class TaskManager:
     async def update_task_position(self, *, task: models.Task, new_task_position: int) -> None:
         async with lock_by_user(task.owner.id):
             tasks = list(await self.get_tasks())
-
-            for i, task_ in enumerate(tasks):
-                if task_.id == task.id:
-                    task = tasks[i]
-                    break
+            task = next(
+                task_
+                for task_ in tasks
+                if task_.id == task.id
+            )
 
             if not (1 <= new_task_position <= len(tasks) + 1):
                 raise ValidationError(
@@ -276,13 +276,19 @@ class TaskManager:
             await models.Task.bulk_update(tasks, fields=('position',))
 
     async def get_tasks(self) -> tuple[models.Task, ...]:
-        return tuple(await models.Task.filter(
+        tasks = tuple(await models.Task.filter(
             owner=self.user,
         ).order_by(
+            'category__name',
             'position',
         ).prefetch_related(
             'category',
         ))
+
+        for task in tasks:
+            task.owner = self.user  # To prevent a query
+
+        return tasks
 
     async def get_tasks_with_count_of_work_logs(self) -> tuple[models.Task, ...]:
         return tuple(await models.Task.filter(

@@ -20,8 +20,8 @@ ALTER TABLE "category" DROP CONSTRAINT IF EXISTS "ut_idx_category_owner_i_ff07be
         CREATE INDEX "idx_task_categor_a04949" ON "task" ("category_id");
         ALTER TABLE "task" ADD CONSTRAINT "fk_task_category_1e9bf928" FOREIGN KEY ("category_id") REFERENCES "category" ("id") ON DELETE SET NULL;
         CREATE INDEX "idx_task_owner_i_460aaa" ON "task" ("owner_id");
-        CREATE INDEX "idx_worklog_date_ad0eec" ON "worklog" USING BRIN ("date", "owner_id");;
-        CREATE INDEX "idx_worklog_date_c06645" ON "worklog" USING BRIN ("date", "task_id");;
+        DROP INDEX "idx_worklog_date_ad0eec";CREATE INDEX "idx_worklog_date_ad0eec" ON "worklog" USING BRIN ("date", "owner_id");;
+        DROP INDEX "idx_worklog_date_c06645";CREATE INDEX "idx_worklog_date_c06645" ON "worklog" USING BRIN ("date", "task_id");;
         CREATE INDEX "idx_worklog_task_id_413e77" ON "worklog" ("task_id");
         CREATE INDEX "idx_worklog_owner_i_01cddc" ON "worklog" ("owner_id");"""
 

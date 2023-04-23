@@ -67,10 +67,9 @@ class ShowTasks(BaseHandler):
 
         if selected_category_id:
             if selected_category_id == 'all':
-                selected_category_id = None
+                pass
             elif selected_category_id == 'other':
                 selected_category_name = 'Other tasks'
-                selected_category_id = None
                 tasks = tuple(
                     task
                     for task in tasks
@@ -120,12 +119,11 @@ class ShowTasks(BaseHandler):
                 show_tasks = False
 
         if show_tasks:
-            if selected_category_id is None:
+            if selected_category_name is None:
                 await self.message.answer('Your current tasks:')
             else:
-                await self.message.answer(
-                    selected_category_name,
-                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                if isinstance(selected_category_id, int):
+                    reply_markup = InlineKeyboardMarkup(inline_keyboard=[[
                         InlineKeyboardButton(
                             f'{emojize(":pencil:")} Edit',
                             callback_data=f'{CallbackCommands.EDIT_CATEGORY} {selected_category_id}',
@@ -134,7 +132,11 @@ class ShowTasks(BaseHandler):
                             f'{emojize(":wastebasket:")} Delete',
                             callback_data=f'{CallbackCommands.DELETE_CATEGORY} {selected_category_id}',
                         ),
-                    ]]),
+                    ]])
+
+                await self.message.answer(
+                    selected_category_name,
+                    reply_markup=reply_markup,
                 )
 
             await self._send_tasks(tasks)
@@ -597,28 +599,29 @@ class ChangeTaskCategory(BaseHandler):
 
         categories = await category_manager.get_categories()
 
-        inline_keyboard_with_categories = [
-            [
-                InlineKeyboardButton(
-                    category.name,
-                    callback_data=f'{CallbackCommands.SET_TASK_CATEGORY} {task_id} {category.id}',
-                ),
-            ]
+        inline_keyboard_buttons_with_categories = [
+            InlineKeyboardButton(
+                category.name,
+                callback_data=f'{CallbackCommands.SET_TASK_CATEGORY} {task_id} {category.id}',
+            )
             for category in categories
         ]
 
-        inline_keyboard_with_categories.append([
+        inline_keyboard_buttons_with_categories.append(
             InlineKeyboardButton(
                 f'{emojize(":wastebasket:")} Reset category',
                 callback_data=f'{CallbackCommands.SET_TASK_CATEGORY} {task_id} null',
             ),
-        ])
+        )
 
         await self.message.answer(
             'Choose the new category:',
             parse_mode=ParseModes.MARKDOWN_V2,
             reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=inline_keyboard_with_categories,
+                inline_keyboard=[
+                    inline_keyboard_buttons_with_categories[i:i + 2]
+                    for i in range(0, len(inline_keyboard_buttons_with_categories), 2)
+                ],
             ),
         )
 

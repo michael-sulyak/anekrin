@@ -67,9 +67,10 @@ class ShowTasks(BaseHandler):
 
         if selected_category_id:
             if selected_category_id == 'all':
-                pass
+                selected_category_id = None
             elif selected_category_id == 'other':
                 selected_category_name = 'Other tasks'
+                selected_category_id = None
                 tasks = tuple(
                     task
                     for task in tasks
@@ -115,97 +116,93 @@ class ShowTasks(BaseHandler):
             categories = await category_manager.get_categories()
 
             if categories:
-                inline_keyboard_buttons_with_categories = [
-                    InlineKeyboardButton(
-                        category.name,
-                        callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} {category.id}',
-                    )
-                    for category in categories
-                ]
-
-                has_tasks_without_category = any(
-                    task.category_id is None
-                    for task in tasks
-                )
-
-                if has_tasks_without_category:
-                    inline_keyboard_buttons_with_categories.append(
-                        InlineKeyboardButton(
-                            'Show other tasks',
-                            callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} other',
-                        ),
-                    )
-
-                inline_keyboard_buttons_with_categories.append(
-                    InlineKeyboardButton(
-                        'Show all tasks',
-                        callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} all',
-                    ),
-                )
-
-                await self.message.answer(
-                    f'{emojize(":file_folder:")} Categories',
-                    reply_markup=InlineKeyboardMarkup(
-                        inline_keyboard=[
-                            inline_keyboard_buttons_with_categories[i:i + 2]
-                            for i in range(0, len(inline_keyboard_buttons_with_categories), 2)
-                        ],
-                    ),
-                )
-
+                await self._send_categories(categories, tasks=tasks)
                 show_tasks = False
 
         if show_tasks:
-            # inline_keyboard_with_tasks = [
-            #     [
-            #         InlineKeyboardButton(
-            #             (
-            #                 f'{get_short_text_complete_button(task.count_of_work_logs_for_current_date)} | '
-            #                 f'{task.name} ({task.str_reward})'
-            #             ),
-            #             callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
-            #         ),
-            #     ]
-            #     for task in tasks
-            # ]
-
-            if selected_category_name is None:
-                await self.message.answer(
-                    'Your current tasks:',
-                    # reply_markup=InlineKeyboardMarkup(
-                    #     inline_keyboard=inline_keyboard_with_tasks,
-                    # ),
-                )
+            if selected_category_id is None:
+                await self.message.answer('Your current tasks:')
             else:
                 await self.message.answer(
                     selected_category_name,
-                    # reply_markup=InlineKeyboardMarkup(
-                    #     inline_keyboard=inline_keyboard_with_tasks,
-                    # ),
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                        InlineKeyboardButton(
+                            f'{emojize(":pencil:")} Edit',
+                            callback_data=f'{CallbackCommands.EDIT_CATEGORY} {selected_category_id}',
+                        ),
+                        InlineKeyboardButton(
+                            f'{emojize(":wastebasket:")} Delete',
+                            callback_data=f'{CallbackCommands.DELETE_CATEGORY} {selected_category_id}',
+                        ),
+                    ]]),
                 )
 
-            for task in tasks:
-                inline_keyboard = [[
-                    InlineKeyboardButton(
-                        get_text_complete_button(task.count_of_work_logs_for_current_date),
-                        callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
-                    ),
-                    InlineKeyboardButton(
-                        f'{emojize(":pencil:")} Edit',
-                        callback_data=f'{CallbackCommands.EDIT_TASK} {task.id}',
-                    ),
-                ]]
-
-                await self.message.answer(
-                    f'{escape_md(task.name)} `({task.str_reward})`',
-                    parse_mode=ParseModes.MARKDOWN_V2,
-                    reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_keyboard),
-                )
+            await self._send_tasks(tasks)
 
         if selected_category_id is None:
             await self.message.answer(
                 'Or do you want to do something else?',
                 reply_markup=inline_markup_for_creating,
+            )
+
+    async def _send_categories(self,
+                               categories: tuple[models.Category, ...], *,
+                               tasks: tuple[models.Task, ...]) -> None:
+        inline_keyboard_buttons_with_categories = [
+            InlineKeyboardButton(
+                category.name,
+                callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} {category.id}',
+            )
+            for category in categories
+        ]
+
+        has_tasks_without_category = any(
+            task.category_id is None
+            for task in tasks
+        )
+
+        if has_tasks_without_category:
+            inline_keyboard_buttons_with_categories.append(
+                InlineKeyboardButton(
+                    'Show other tasks',
+                    callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} other',
+                ),
+            )
+
+        inline_keyboard_buttons_with_categories.append(
+            InlineKeyboardButton(
+                'Show all tasks',
+                callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} all',
+            ),
+        )
+
+        await self.message.answer(
+            f'{emojize(":file_folder:")} Categories',
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    inline_keyboard_buttons_with_categories[i:i + 2]
+                    for i in range(0, len(inline_keyboard_buttons_with_categories), 2)
+                ],
+            ),
+        )
+
+    async def _send_tasks(self, tasks: tuple[models.Task, ...]) -> None:
+        for task in tasks:
+            inline_keyboard = [[
+                InlineKeyboardButton(
+                    get_text_complete_button(task.count_of_work_logs_for_current_date),
+                    callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
+                ),
+                InlineKeyboardButton(
+                    f'{emojize(":pencil:")} Edit',
+                    callback_data=f'{CallbackCommands.EDIT_TASK} {task.id}',
+                ),
+            ]]
+
+            await self.message.answer(
+                f'{escape_md(task.name)} `({task.str_reward})`',
+                parse_mode=ParseModes.MARKDOWN_V2,
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_keyboard),
             )
 
 

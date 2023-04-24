@@ -17,7 +17,6 @@ class CallbackCommands(ClassPropertyAllMixin):
     DELETE_TASK = 'delete_task'
     CHANGE_TASK_NAME = 'change_task_name'
     CHANGE_TASK_REWARD = 'change_task_reward'
-    CHANGE_TASK_POSITION = 'change_task_order'
     CHANGE_TASK_CATEGORY = 'change_task_category'
     SET_TASK_CATEGORY = 'set_task_category'
     CREATE_CATEGORY = 'create_category'
@@ -49,7 +48,6 @@ class QuestionTypes(ClassPropertyAllMixin):
     CHANGE_TASK_NAME = 'change_task_name'
     CHANGE_CATEGORY_NAME = 'change_category_name'
     CHANCE_TASK_REWARD = 'change_task_reward'
-    NEW_TASK_POSITION = 'new_task_position'
     INFO_ABOUT_TASKS = 'info_about_tasks'
     FILE_WITH_WORK_LOGS = 'file_with_work_logs'
 

@@ -102,7 +102,7 @@ async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user:
 
     proceed_task_names = set()
 
-    for position, task_info in enumerate(tasks_info, 1):
+    for task_info in tasks_info:
         task_name = task_info['name']
         task_reward = task_info['reward']
         task_category_name = task_info['category']
@@ -114,7 +114,6 @@ async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user:
 
         if task_name in map_of_current_tasks:
             task = map_of_current_tasks[task_name]
-            task.position = position
             task.reward = task_reward
             task.category = map_of_current_categories.get(task_category_name)
             tasks_to_update.append(task)
@@ -122,7 +121,6 @@ async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user:
             tasks_to_create.append(models.Task(
                 name=task_name,
                 owner=for_user,
-                position=position,
                 reward=task_reward,
                 category=map_of_current_categories.get(task_category_name),
             ))
@@ -137,7 +135,7 @@ async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user:
     if tasks_to_update:
         await models.Task.bulk_update(
             tasks_to_update,
-            fields=('position', 'reward', 'category_id',),
+            fields=('reward', 'category_id',),
         )
 
     if tasks_to_create:

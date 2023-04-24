@@ -54,12 +54,7 @@ class CategoryManager:
 
     async def delete_category(self, *, category_id: int) -> None:
         async with lock_by_user(self.user.id):
-            category = await models.Category.filter(
+            await models.Category.filter(
                 id=category_id,
                 owner=self.user,
-            ).first()
-
-            if not category:
-                return
-
-            await category.delete()
+            ).delete()

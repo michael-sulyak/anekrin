@@ -41,8 +41,6 @@ __all__ = (
     'AnswerWithNewNameForTask',
     'ChangeTaskReward',
     'ChangeTaskName',
-    'ChangeTaskPosition',
-    'AnswerWithNewTaskPosition',
     'RewriteAllTasks',
     'AnswerWithTaskInfo',
     'ShowCalendarHeatmap',
@@ -120,7 +118,10 @@ class ShowTasks(BaseHandler):
 
         if show_tasks:
             if selected_category_name is None:
-                await self.message.answer('Your current tasks:')
+                await self.message.answer(
+                    '*Your current tasks*',
+                    parse_mode=ParseModes.MARKDOWN_V2,
+                )
             else:
                 if isinstance(selected_category_id, int):
                     reply_markup = InlineKeyboardMarkup(inline_keyboard=[[
@@ -133,10 +134,13 @@ class ShowTasks(BaseHandler):
                             callback_data=f'{CallbackCommands.DELETE_CATEGORY} {selected_category_id}',
                         ),
                     ]])
+                else:
+                    reply_markup = None
 
                 await self.message.answer(
-                    selected_category_name,
+                    f'*{selected_category_name}*',
                     reply_markup=reply_markup,
+                    parse_mode=ParseModes.MARKDOWN_V2,
                 )
 
             await self._send_tasks(tasks)
@@ -179,7 +183,8 @@ class ShowTasks(BaseHandler):
         )
 
         await self.message.answer(
-            f'{emojize(":file_folder:")} Categories',
+            f'{emojize(":file_folder:")} *Categories*',
+            parse_mode=ParseModes.MARKDOWN_V2,
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     inline_keyboard_buttons_with_categories[i:i + 2]
@@ -350,7 +355,7 @@ class ShowOldTasks(BaseHandler):
             tasks,
             key=lambda x: (
                 datetime.date.min if x.last_work_log_date is None else x.last_work_log_date,
-                x.position,
+                x.name,
             ),
         )
 
@@ -547,49 +552,6 @@ class AnswerWithTaskInfo(BaseHandler):
         await self.message.answer(f'Saved {emojize(":thumbs_up:")}')
 
 
-class ChangeTaskPosition(BaseHandler):
-    name = CallbackCommands.CHANGE_TASK_POSITION
-    type = HandlerTypes.CALLBACK_QUERY
-
-    async def handle(self, task_id: str) -> None:
-        user_manager = UserManager(user=self.message.from_user)
-        task_manager = TaskManager(user=self.message.from_user)
-
-        task_id = int(task_id)
-        tasks = await task_manager.get_tasks()
-        category_id = next(
-            task.category_id
-            for task in tasks
-            if task.id == task_id
-        )
-        tasks_with_specific_category_iter = (
-            task
-            for task in tasks
-            if task.category_id == category_id
-        )
-
-        answer = '**Tasks:**\n'
-        for task_position, task in enumerate(tasks_with_specific_category_iter, 1):
-            if task.category_id != category_id:
-                continue
-
-            task_info = f'{task_position}\\. `{escape_md(task.name)}`'
-
-            if task.id == task_id:
-                task_info = f'{emojize(":round_pushpin:")} *{task_info}*'
-
-            answer += task_info + '\n'
-
-        answer += '\nEnter the new task position:'
-
-        await user_manager.wait_answer_for(f'{QuestionTypes.NEW_TASK_POSITION} {task_id}')
-        await self.message.answer(
-            answer,
-            parse_mode=ParseModes.MARKDOWN_V2,
-            reply_markup=get_reply_for_cancel_question('Cancel position updating'),
-        )
-
-
 class ChangeTaskCategory(BaseHandler):
     name = CallbackCommands.CHANGE_TASK_CATEGORY
     type = HandlerTypes.CALLBACK_QUERY
@@ -658,60 +620,6 @@ class SetTaskCategory(BaseHandler):
                 f'*The new category*:\n`{escape_md(new_category_name)}`\n'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
-        )
-
-
-class AnswerWithNewTaskPosition(BaseHandler):
-    name = QuestionTypes.NEW_TASK_POSITION
-    type = HandlerTypes.ANSWER
-
-    async def handle(self, new_task_position: str, task_id: str) -> None:
-        if new_task_position.isdigit():
-            new_task_position = int(new_task_position)
-        else:
-            await self.message.answer(
-                f'`{escape_md(new_task_position)}` is invalid value\\.',
-                parse_mode=ParseModes.MARKDOWN_V2,
-                reply_markup=get_reply_for_cancel_question('Cancel position updating'),
-            )
-            return
-
-        user_manager = UserManager(user=self.message.from_user)
-        task_manager = TaskManager(user=self.message.from_user)
-
-        task_id = int(task_id)
-        tasks = await task_manager.get_tasks()
-        target_task = next(
-            task
-            for task in tasks
-            if task.id == task_id
-        )
-        tasks_with_specific_category_iter = (
-            task
-            for task in tasks
-            if task.category_id == target_task.category_id
-        )
-
-        for relative_task_position, task in enumerate(tasks_with_specific_category_iter, 1):
-            if relative_task_position == new_task_position:
-                new_task_position = task.position
-                break
-        else:
-            new_task_position = len(tasks) + 1
-
-        try:
-            await task_manager.update_task_position(
-                task=target_task,
-                new_task_position=new_task_position,
-            )
-        except ValidationError as e:
-            await self.message.answer_error(e)
-            return
-
-        await user_manager.clear_waiting_of_answer()
-
-        await self.message.reply(
-            f'You successfully updated the task position {emojize(":thumbs_up:")}',
         )
 
 
@@ -881,13 +789,6 @@ class EditTask(BaseHandler):
                         f'{emojize(":coin:")} Change reward',
                         callback_data=f'{CallbackCommands.CHANGE_TASK_REWARD} {task.id}',
                     ),
-                    InlineKeyboardButton(
-                        f'{emojize(":up-down_arrow:")} Change position',
-                        callback_data=f'{CallbackCommands.CHANGE_TASK_POSITION} {task.id}',
-                    ),
-                ],
-                [
-
                     InlineKeyboardButton(
                         f'{emojize(":wastebasket:")} Delete',
                         callback_data=f'{CallbackCommands.DELETE_TASK} {task.id}',

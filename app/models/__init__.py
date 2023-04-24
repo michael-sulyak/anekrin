@@ -76,7 +76,6 @@ class Task(Model):
         null=True,
         index=True,
     )
-    position = fields.IntField()
     reward = fields.IntField()
     created_at = fields.DatetimeField(
         auto_now_add=True,
@@ -94,7 +93,6 @@ class Task(Model):
 
     class Meta:
         indexes = (
-            UniqueTogether(fields={'owner_id', 'position'}, is_deferrable_initially_immediate=True),
             UniqueTogether(fields={'owner_id', 'name'}, is_deferrable_initially_immediate=True),
         )
 

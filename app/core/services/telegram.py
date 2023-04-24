@@ -43,8 +43,6 @@ class TelegramMessageHandler:
         handlers_for_tasks.AnswerWithNewNameForTask,
         handlers_for_tasks.ChangeTaskReward,
         handlers_for_tasks.ChangeTaskName,
-        handlers_for_tasks.ChangeTaskPosition,
-        handlers_for_tasks.AnswerWithNewTaskPosition,
         handlers_for_tasks.RewriteAllTasks,
         handlers_for_tasks.AnswerWithTaskInfo,
         handlers_for_tasks.ShowOldTasks,

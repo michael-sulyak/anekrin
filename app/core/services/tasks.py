@@ -12,7 +12,7 @@ from . import utils
 from .. import constants
 from ..exceptions import ValidationError
 from ... import models
-from ...models.utils import lock_by_user, get_first
+from ...models.utils import lock_by_user
 
 
 class TaskManager:
@@ -31,22 +31,9 @@ class TaskManager:
             if has_task_with_the_same_name:
                 raise ValidationError('You already have a task with this name')
 
-            max_position = await get_first(models.Task.filter(
-                owner=self.user,
-            ).order_by(
-                '-position',
-            ).values_list(
-                'position',
-                flat=True,
-            ))
-
-            if max_position is None:
-                max_position = 0
-
             return await models.Task.create(
                 name=name,
                 owner=self.user,
-                position=max_position + 1,
                 reward=reward,
             )
 
@@ -222,65 +209,14 @@ class TaskManager:
         task.reward = new_reward
         await task.save(update_fields=('reward',))
 
-    async def update_task_position(self, *, task: models.Task, new_task_position: int) -> None:
-        async with lock_by_user(task.owner.id):
-            tasks = list(await self.get_tasks())
-            task = next(
-                task_
-                for task_ in tasks
-                if task_.id == task.id
-            )
-
-            if not (1 <= new_task_position <= len(tasks) + 1):
-                raise ValidationError(
-                    'Invalid position.'
-                    f'Available choices: 1-{len(tasks) + 1}'
-                )
-
-            if new_task_position == len(tasks) + 1:
-                position = 1
-
-                for task_ in tasks:
-                    if task_.id == task.id:
-                        continue
-
-                    task_.position = position
-                    position += 1
-
-                task.position = position
-            elif task.position < new_task_position:
-                position = task.position
-
-                for task_ in tasks[task.position:]:
-                    if position == new_task_position:
-                        position += 1
-
-                    task_.position = position
-                    position += 1
-
-                task.position = new_task_position
-            elif task.position > new_task_position:
-                position = new_task_position + 1
-
-                for task_ in tasks[new_task_position - 1:]:
-                    if task_.id == task.id:
-                        continue
-
-                    task_.position = position
-                    position += 1
-
-                task.position = new_task_position
-            else:
-                return
-
-            await models.Task.bulk_update(tasks, fields=('position',))
-
     async def get_tasks(self) -> tuple[models.Task, ...]:
         tasks = tuple(await models.Task.filter(
             owner=self.user,
+        ).annotate(
+            count_of_work_logs_for_last_time=self._get_annotation_count_of_work_logs_for_last_time(),
         ).order_by(
-            'category__name',
-            'position',
+            '-count_of_work_logs_for_last_time',
+            'name',
         ).prefetch_related(
             'category',
         ))
@@ -301,9 +237,21 @@ class TaskManager:
                 f'AND "{models.WorkLog._meta.db_table}"."date" = '
                 f'\'{self.user.get_selected_work_date().isoformat()}\'::date)'
             ),
+            count_of_work_logs_for_last_time=self._get_annotation_count_of_work_logs_for_last_time(),
         ).order_by(
-            'position',
+            '-count_of_work_logs_for_last_time',
+            'name',
         ))
+
+    def _get_annotation_count_of_work_logs_for_last_time(self) -> RawSQL:
+        date = self.user.get_today_in_user_tz() - datetime.timedelta(days=30)
+
+        return RawSQL(
+            f'(SELECT COUNT(*) '
+            f'FROM "{models.WorkLog._meta.db_table}" '
+            f'WHERE "{models.WorkLog._meta.db_table}"."task_id" = "{models.Task._meta.db_table}"."id" '
+            f'AND "{models.WorkLog._meta.db_table}"."date" >= \'{date.isoformat()}\'::date)'
+        )
 
     async def get_count_of_work_logs_for_current_date(self, *, task_id: int) -> int:
         return await models.WorkLog.filter(
@@ -316,8 +264,10 @@ class TaskManager:
             owner=self.user,
         ).annotate(
             last_work_log_date=Max('work_logs__date'),
+            count_of_work_logs_for_last_time=self._get_annotation_count_of_work_logs_for_last_time(),
         ).order_by(
-            'position',
+            '-count_of_work_logs_for_last_time',
+            'name',
         ))
 
     async def mark_task_as_completed(self, *, task_id: int) -> typing.Dict[str, typing.Any]:
@@ -357,30 +307,10 @@ class TaskManager:
 
     async def delete_task(self, *, task_id: int) -> None:
         async with lock_by_user(self.user.id):
-            task = await models.Task.filter(
+            await models.Task.filter(
                 id=task_id,
                 owner=self.user,
-            ).first()
-
-            if not task:
-                return
-
-            other_tasks = tuple(await models.Task.filter(
-                owner=self.user,
-                position__gt=task.position,
-            ).order_by(
-                'position',
-            ))
-
-            await task.delete()
-
-            if not other_tasks:
-                return
-
-            for new_order, task in enumerate(other_tasks, task.position):
-                task.position = new_order
-
-            await models.Task.bulk_update(other_tasks, fields=('position',))
+            ).delete()
 
     async def get_work_log(self, work_log_id: int) -> typing.Optional[models.WorkLog]:
         return await models.WorkLog.filter(

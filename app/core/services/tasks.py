@@ -244,7 +244,7 @@ class TaskManager:
         ))
 
     def _get_annotation_count_of_work_logs_for_last_time(self) -> RawSQL:
-        date = self.user.get_today_in_user_tz() - datetime.timedelta(days=30)
+        date = self.user.get_today_in_user_tz() - datetime.timedelta(days=100)
 
         return RawSQL(
             f'(SELECT COUNT(*) '

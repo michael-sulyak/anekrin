@@ -138,7 +138,7 @@ class ShowTasks(BaseHandler):
                     reply_markup = None
 
                 await self.message.answer(
-                    f'*{selected_category_name}*',
+                    f'*Category:*\n*{selected_category_name}*',
                     reply_markup=reply_markup,
                     parse_mode=ParseModes.MARKDOWN_V2,
                 )

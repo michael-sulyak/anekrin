@@ -61,24 +61,8 @@ async def test_show_tasks() -> None:
     ExpectedCalls(
         ExpectedCall(
             name='answer',
-            args=('Your current tasks:',),
-            kwargs__len=0,
-        ),
-        ExpectedCall(
-            name='answer',
-            args__0__contains=first_task.name,
-            args__len=1,
-            kwargs__keys={'reply_markup', 'parse_mode'},
-            kwargs__reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(
-                    f'{emojize(":check_box_with_check:")} Complete',
-                    callback_data=f'{CallbackCommands.COMPLETE_TASK} {first_task.id}',
-                ),
-                InlineKeyboardButton(
-                    f'{emojize(":pencil:")} Edit',
-                    callback_data=f'{CallbackCommands.EDIT_TASK} {first_task.id}',
-                ),
-            ]])
+            args=('*Your current tasks*',),
+            kwargs__keys={'parse_mode'},
         ),
         ExpectedCall(
             name='answer',
@@ -95,6 +79,22 @@ async def test_show_tasks() -> None:
                     callback_data=f'{CallbackCommands.EDIT_TASK} {second_task.id}',
                 ),
             ]]),
+        ),
+        ExpectedCall(
+            name='answer',
+            args__0__contains=first_task.name,
+            args__len=1,
+            kwargs__keys={'reply_markup', 'parse_mode'},
+            kwargs__reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(
+                    f'{emojize(":check_box_with_check:")} Complete',
+                    callback_data=f'{CallbackCommands.COMPLETE_TASK} {first_task.id}',
+                ),
+                InlineKeyboardButton(
+                    f'{emojize(":pencil:")} Edit',
+                    callback_data=f'{CallbackCommands.EDIT_TASK} {first_task.id}',
+                ),
+            ]])
         ),
         ExpectedCall(
             name='answer',
@@ -168,3 +168,35 @@ async def test_answer_with_name_for_new_task() -> None:
     assert len(tasks) == 1
     assert tasks[0].name == task_name
     assert tasks[0].reward == 0
+
+
+@pytest.mark.asyncio
+async def test_create_category() -> None:
+    sender = generate_random_raw_user()
+    user = await models.User.create(telegram_user_id=sender['id'])
+
+    telegram_update = generate_telegram_update_for_callback(
+        CallbackCommands.CREATE_CATEGORY,
+        sender=sender,
+    )
+    message_class, calls = create_mocked_class_for_message()
+    handler = TelegramMessageHandler(message_class=message_class)
+
+    await handler.process_update(telegram_update, immediately=True)
+
+    ExpectedCalls(
+        ExpectedCall(
+            name='answer',
+            args=('Enter category name:',),
+            kwargs__keys={'reply_markup'},
+            kwargs__reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(
+                    f'{emojize(":multiply:")} Cancel',
+                    callback_data=CallbackCommands.CANCEL_QUESTION,
+                ),
+            ]]),
+        ),
+    ).compare_with(calls)
+
+    await user.refresh_from_db(fields=('wait_answer_for',))
+    assert user.wait_answer_for == QuestionTypes.NAME_FOR_NEW_CATEGORY

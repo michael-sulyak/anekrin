@@ -35,7 +35,7 @@ class ExpectedCall:
             del params['name']
 
         if 'args' in params:
-            assert params['args'] == call.args
+            assert params['args'] == call.args, f'{params["args"]} != {call.args}'
             del params['args']
 
         for i in range(len(call.args)):
@@ -55,7 +55,7 @@ class ExpectedCall:
             del params['kwargs']
 
         if 'kwargs__len' in params:
-            assert params['kwargs__len'] == len(call.kwargs)
+            assert params['kwargs__len'] == len(call.kwargs), f'{params["kwargs__len"]} != len({call.kwargs})'
             del params['kwargs__len']
 
         if 'kwargs__keys' in params:

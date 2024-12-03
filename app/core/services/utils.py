@@ -1,14 +1,14 @@
 import datetime
 import typing
 
-from aiogram.utils.markdown import escape_md
+from aiogram.utils.text_decorations import markdown_decoration
 
 from .. import constants
 from ..exceptions import ValidationError
 from ... import models
 
 
-async def recalculate_day_bonus(date: datetime.date, *, user: models.User, _max_next_days_to_check: int = 29) -> int:
+async def recalculate_day_bonus(date: datetime.date, *, user: models.User, _max_next_days_to_check: int = 365) -> int:
     # Note: Need to run with lock by a user
 
     from .work_log_stats import WorkLogsStats
@@ -108,7 +108,7 @@ async def rewrite_current_user_tasks(tasks_info: typing.List[dict], *, for_user:
         task_category_name = task_info['category']
 
         if task_name in proceed_task_names:
-            raise ValidationError(f'`{escape_md(task_name)}` is duplicated\\.', is_markdown=True)
+            raise ValidationError(f'`{markdown_decoration.quote(task_name)}` is duplicated\\.', is_markdown=True)
 
         proceed_task_names.add(task_name)
 

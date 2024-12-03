@@ -1,7 +1,7 @@
 import datetime
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.utils.markdown import escape_md
+from aiogram.utils.text_decorations import markdown_decoration
 from emoji.core import emojize
 
 from ..base import BaseHandler
@@ -30,31 +30,31 @@ class ShowSettings(BaseHandler):
             inline_keyboard=[
                 [
                     InlineKeyboardButton(
-                        f'{emojize(":calendar:")} Choose date',
+                        text=f'{emojize(":calendar:")} Choose date',
                         callback_data=CallbackCommands.CHOOSE_DATE,
                     ),
                     InlineKeyboardButton(
-                        f'{emojize(":two-thirty:")} Change time zone',
+                        text=f'{emojize(":two-thirty:")} Change time zone',
                         callback_data=CallbackCommands.UPDATE_TIMEZONE,
                     ),
                 ],
                 [
                     InlineKeyboardButton(
-                        f'{emojize(":inbox_tray:")} Import work logs',
+                        text=f'{emojize(":inbox_tray:")} Import work logs',
                         callback_data=CallbackCommands.IMPORT_WORK_LOGS,
                     ),
                     InlineKeyboardButton(
-                        f'{emojize(":outbox_tray:")} Export data',
+                        text=f'{emojize(":outbox_tray:")} Export data',
                         callback_data=CallbackCommands.EXPORT_DATA,
                     ),
                 ],
                 [
                     InlineKeyboardButton(
-                        f'{emojize(":carpentry_saw:")} Edit all tasks',
+                        text=f'{emojize(":carpentry_saw:")} Edit all tasks',
                         callback_data=CallbackCommands.REWRITE_ALL_TASKS,
                     ),
                     InlineKeyboardButton(
-                        f'{emojize(":information:")} Help',
+                        text=f'{emojize(":information:")} Help',
                         callback_data=CallbackCommands.HELP,
                     ),
                 ]
@@ -83,7 +83,7 @@ class ChooseDate(BaseHandler):
                     [get_btn_for_reset_work_date()],
                     [
                         InlineKeyboardButton(
-                            f'{emojize(":BACK_arrow:")} Select yesterday',
+                            text=f'{emojize(":BACK_arrow:")} Select yesterday',
                             callback_data=CallbackCommands.SELECT_YESTERDAY,
                         ),
                     ],
@@ -101,11 +101,11 @@ class UpdateTZ(BaseHandler):
         user_manager = UserManager(user=self.message.from_user)
         await user_manager.wait_answer_for(QuestionTypes.UPDATE_TIMEZONE)
 
-        link_with_tz = escape_md('https://en.wikipedia.org/wiki/List_of_tz_database_time_zones')
+        link_with_tz = markdown_decoration.quote('https://en.wikipedia.org/wiki/List_of_tz_database_time_zones')
 
         await self.message.answer(
             (
-                f'*Your time zone:* `{escape_md(self.message.from_user.timezone)}`\n\n'
+                f'*Your time zone:* `{markdown_decoration.quote(self.message.from_user.timezone)}`\n\n'
                 f'*Available time zones:*\n'
                 f'[{link_with_tz}]({link_with_tz})\n'
                 f'\\(Look column *"TZ database name"*\\)\n\n'
@@ -159,7 +159,7 @@ class SetWorkDate(BaseHandler):
             new_work_date = datetime.date.fromisoformat(new_work_date)
         except ValueError:
             await self.message.reply(
-                f'`{escape_md(new_work_date)}` is invalid date\\.\n'
+                f'`{markdown_decoration.quote(new_work_date)}` is invalid date\\.\n'
                 f'Use format `YYYY-MM-DDM`\\.',
                 parse_mode=ParseModes.MARKDOWN_V2,
                 reply_markup=reply_markup_for_waiting_of_answer,

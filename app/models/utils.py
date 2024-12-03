@@ -33,7 +33,7 @@ async def get_count(query: typing.Union[ValuesListQuery, ValuesQuery]) -> int:
     # Tortoise doesn't implement it in some cases.
 
     conn = Tortoise.get_connection('default')
-    return (await conn.execute_query(f'SELECT COUNT(*) FROM ({query.as_query()}) AS temp;'))[0]
+    return (await conn.execute_query(f'SELECT COUNT(*) FROM ({query.sql(params_inline=True)}) AS temp;'))[0]
 
 
 async def get_common_db_connection() -> Connection:

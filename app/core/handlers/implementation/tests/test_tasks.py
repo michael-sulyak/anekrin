@@ -71,11 +71,11 @@ async def test_show_tasks() -> None:
             kwargs__keys={'reply_markup', 'parse_mode'},
             kwargs__reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
-                    f'{emojize(":check_mark_button:")} Complete (2)',
+                    text=f'{emojize(":check_mark_button:")} Complete (2)',
                     callback_data=f'{CallbackCommands.COMPLETE_TASK} {second_task.id}',
                 ),
                 InlineKeyboardButton(
-                    f'{emojize(":pencil:")} Edit',
+                    text=f'{emojize(":pencil:")} Edit',
                     callback_data=f'{CallbackCommands.EDIT_TASK} {second_task.id}',
                 ),
             ]]),
@@ -87,11 +87,11 @@ async def test_show_tasks() -> None:
             kwargs__keys={'reply_markup', 'parse_mode'},
             kwargs__reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
-                    f'{emojize(":check_box_with_check:")} Complete',
+                    text=f'{emojize(":check_box_with_check:")} Complete',
                     callback_data=f'{CallbackCommands.COMPLETE_TASK} {first_task.id}',
                 ),
                 InlineKeyboardButton(
-                    f'{emojize(":pencil:")} Edit',
+                    text=f'{emojize(":pencil:")} Edit',
                     callback_data=f'{CallbackCommands.EDIT_TASK} {first_task.id}',
                 ),
             ]])
@@ -124,7 +124,7 @@ async def test_create_task() -> None:
             kwargs__keys={'reply_markup'},
             kwargs__reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
-                    f'{emojize(":multiply:")} Cancel',
+                    text=f'{emojize(":multiply:")} Cancel',
                     callback_data=CallbackCommands.CANCEL_QUESTION,
                 ),
             ]]),
@@ -191,7 +191,7 @@ async def test_create_category() -> None:
             kwargs__keys={'reply_markup'},
             kwargs__reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
-                    f'{emojize(":multiply:")} Cancel',
+                    text=f'{emojize(":multiply:")} Cancel',
                     callback_data=CallbackCommands.CANCEL_QUESTION,
                 ),
             ]]),

@@ -4,7 +4,6 @@ import typing
 from aiogram.types import (
     InlineKeyboardMarkup, Message as TelegramMessage,
 )
-from aiogram.utils.exceptions import MessageNotModified
 
 from .constants import ParseModes
 from .exceptions import ValidationError
@@ -86,8 +85,4 @@ class Message(BaseMessage):
         if self._telegram_message.reply_markup == reply_markup:
             return
 
-        try:
-            await self._telegram_message.edit_reply_markup(reply_markup)
-        except MessageNotModified:
-            # The top check may not work if a user sent the same request several times.
-            pass
+        await self._telegram_message.edit_reply_markup(reply_markup=reply_markup)

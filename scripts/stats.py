@@ -19,7 +19,7 @@ async def main() -> None:
         {
             'users': await models.User.all().count(),
             'active_users': await get_count(models.WorkLog.filter(
-                date__gte=datetime.date.today() - datetime.timedelta(days=2),
+                date__gte=datetime.date.today() - datetime.timedelta(days=7),
             ).distinct().values(
                 'owner_id',
             )),

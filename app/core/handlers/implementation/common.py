@@ -1,9 +1,9 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from emoji.core import emojize
 
 from ..base import BaseHandler
 from ..constants import HandlerTypes
-from ...constants import BotCommand, CallbackCommands, TARGET_NUMBER
+from ...constants import BotCommand, CallbackCommands, ParseModes, TARGET_NUMBER
 from ...services.users import UserManager
 
 
@@ -26,7 +26,7 @@ class Start(BaseHandler):
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[[
                     InlineKeyboardButton(
-                        f'{emojize(":two-thirty:")} Change time zone',
+                        text=f'{emojize(":two-thirty:")} Change time zone',
                         callback_data=CallbackCommands.UPDATE_TIMEZONE,
                     ),
                 ]],
@@ -70,7 +70,7 @@ class Help(BaseHandler):
                 f'With these steps, you can easily get started with *Anekrin* and start tracking your '
                 f'productivity today\\!'
             ),
-            parse_mode=ParseMode.MARKDOWN_V2,
+            parse_mode=ParseModes.MARKDOWN_V2,
         )
 
 

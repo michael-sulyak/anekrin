@@ -5,10 +5,9 @@ import json
 import logging
 
 from aiogram.types import (
-    Document as TelegramDocument, InlineKeyboardButton, InlineKeyboardMarkup,
-    InputFile as TelegramInputFile,
+    BufferedInputFile, Document as TelegramDocument, InlineKeyboardButton, InlineKeyboardMarkup,
 )
-from aiogram.utils.markdown import escape_md
+from aiogram.utils.text_decorations import markdown_decoration
 from emoji.core import emojize
 from tortoise.exceptions import DoesNotExist
 
@@ -92,11 +91,11 @@ class ShowTasks(BaseHandler):
         inline_markup_for_creating = InlineKeyboardMarkup(
             inline_keyboard=[[
                 InlineKeyboardButton(
-                    f'{emojize(":plus:")} Add task',
+                    text=f'{emojize(":plus:")} Add task',
                     callback_data=CallbackCommands.CREATE_TASK,
                 ),
                 InlineKeyboardButton(
-                    f'{emojize(":plus:")} Add category',
+                    text=f'{emojize(":plus:")} Add category',
                     callback_data=CallbackCommands.CREATE_CATEGORY,
                 ),
             ]],
@@ -126,11 +125,11 @@ class ShowTasks(BaseHandler):
                 if isinstance(selected_category_id, int):
                     reply_markup = InlineKeyboardMarkup(inline_keyboard=[[
                         InlineKeyboardButton(
-                            f'{emojize(":pencil:")} Edit',
+                            text=f'{emojize(":pencil:")} Edit',
                             callback_data=f'{CallbackCommands.EDIT_CATEGORY} {selected_category_id}',
                         ),
                         InlineKeyboardButton(
-                            f'{emojize(":wastebasket:")} Delete',
+                            text=f'{emojize(":wastebasket:")} Delete',
                             callback_data=f'{CallbackCommands.DELETE_CATEGORY} {selected_category_id}',
                         ),
                     ]])
@@ -156,7 +155,7 @@ class ShowTasks(BaseHandler):
                                tasks: tuple[models.Task, ...]) -> None:
         inline_keyboard_buttons_with_categories = [
             InlineKeyboardButton(
-                category.name,
+                text=category.name,
                 callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} {category.id}',
             )
             for category in categories
@@ -170,14 +169,14 @@ class ShowTasks(BaseHandler):
         if has_tasks_without_category:
             inline_keyboard_buttons_with_categories.append(
                 InlineKeyboardButton(
-                    'Show other tasks',
+                    text='Show other tasks',
                     callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} other',
                 ),
             )
 
         inline_keyboard_buttons_with_categories.append(
             InlineKeyboardButton(
-                'Show all tasks',
+                text='Show all tasks',
                 callback_data=f'{CallbackCommands.SHOW_TASKS_IN_CATEGORY} all',
             ),
         )
@@ -197,17 +196,17 @@ class ShowTasks(BaseHandler):
         for task in tasks:
             inline_keyboard = [[
                 InlineKeyboardButton(
-                    get_text_complete_button(task.count_of_work_logs_for_current_date),
+                    text=get_text_complete_button(task.count_of_work_logs_for_current_date),
                     callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
                 ),
                 InlineKeyboardButton(
-                    f'{emojize(":pencil:")} Edit',
+                    text=f'{emojize(":pencil:")} Edit',
                     callback_data=f'{CallbackCommands.EDIT_TASK} {task.id}',
                 ),
             ]]
 
             await self.message.answer(
-                f'{escape_md(task.name)} `({task.str_reward})`',
+                f'{markdown_decoration.quote(task.name)} `({task.str_reward})`',
                 parse_mode=ParseModes.MARKDOWN_V2,
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_keyboard),
             )
@@ -249,11 +248,11 @@ class ShowFinishedTask(BaseHandler):
                 reward = str(work_log.reward)
 
             await self.message.answer(
-                f'{escape_md(work_log.name)} `({reward})`',
+                f'{markdown_decoration.quote(work_log.name)} `({reward})`',
                 parse_mode=ParseModes.MARKDOWN_V2,
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                     InlineKeyboardButton(
-                        f'{emojize(":wastebasket:")} Delete',
+                        text=f'{emojize(":wastebasket:")} Delete',
                         callback_data=f'{CallbackCommands.DELETE_WORK_LOG} {work_log.id}',
                     ),
                 ]]),
@@ -276,11 +275,11 @@ class CompleteTask(BaseHandler):
         await self.message.edit_reply_markup(
             InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
-                    get_text_complete_button(count_of_work_logs),
+                    text=get_text_complete_button(count_of_work_logs),
                     callback_data=f'{CallbackCommands.COMPLETE_TASK} {task.id}',
                 ),
                 InlineKeyboardButton(
-                    f'{emojize(":pencil:")} Edit',
+                    text=f'{emojize(":pencil:")} Edit',
                     callback_data=f'{CallbackCommands.EDIT_TASK} {task.id}',
                 ),
             ]]),
@@ -337,7 +336,7 @@ class ShowOldTasks(BaseHandler):
             return
 
         old_tasks_info = '\n'.join(
-            f'{emojize(":black_small_square:")} {escape_md(task.name)}'
+            f'{emojize(":black_small_square:")} {markdown_decoration.quote(task.name)}'
             for task in old_tasks[:5]
         )
 
@@ -367,8 +366,8 @@ class ShowOldTasks(BaseHandler):
             task
             for task in sorted_tasks
             if (
-                    (task.last_work_log_date is not None and task.last_work_log_date <= check_before)
-                    or (task.last_work_log_date is None and task.created_at <= day_ago)
+                (task.last_work_log_date is not None and task.last_work_log_date <= check_before)
+                or (task.last_work_log_date is None and task.created_at <= day_ago)
             )
         )
 
@@ -461,7 +460,7 @@ class ChangeTaskName(BaseHandlerForTaskFieldUpdating):
     async def _send_prompt(self, task: models.Task) -> None:
         await self.message.answer('You want to update the name for task:')
         await self.message.answer(
-            f'`{escape_md(task.name)}`',
+            f'`{markdown_decoration.quote(task.name)}`',
             parse_mode=ParseModes.MARKDOWN_V2,
         )
         await self.message.answer(
@@ -477,7 +476,7 @@ class ChangeCategoryName(BaseHandlerForCategoryFieldUpdating):
     async def _send_prompt(self, category: models.Task) -> None:
         await self.message.answer('You want to update the name for category:')
         await self.message.answer(
-            f'`{escape_md(category.name)}`',
+            f'`{markdown_decoration.quote(category.name)}`',
             parse_mode=ParseModes.MARKDOWN_V2,
         )
         await self.message.answer(
@@ -494,7 +493,7 @@ class ChangeTaskReward(BaseHandlerForTaskFieldUpdating):
         await self.message.answer(
             (
                 f'You want to update the task reward:\n'
-                f'`{escape_md(task.name)}`\n\n'
+                f'`{markdown_decoration.quote(task.name)}`\n\n'
                 f'Enter the new task reward:'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
@@ -563,7 +562,7 @@ class ChangeTaskCategory(BaseHandler):
 
         inline_keyboard_buttons_with_categories = [
             InlineKeyboardButton(
-                category.name,
+                text=category.name,
                 callback_data=f'{CallbackCommands.SET_TASK_CATEGORY} {task_id} {category.id}',
             )
             for category in categories
@@ -571,7 +570,7 @@ class ChangeTaskCategory(BaseHandler):
 
         inline_keyboard_buttons_with_categories.append(
             InlineKeyboardButton(
-                f'{emojize(":wastebasket:")} Reset category',
+                text=f'{emojize(":wastebasket:")} Reset category',
                 callback_data=f'{CallbackCommands.SET_TASK_CATEGORY} {task_id} null',
             ),
         )
@@ -616,8 +615,8 @@ class SetTaskCategory(BaseHandler):
         await self.message.reply(
             (
                 'You successfully changed the task category\\!\n\n'
-                f'*The old category*:\n`{escape_md(old_category_name)}`\n\n'
-                f'*The new category*:\n`{escape_md(new_category_name)}`\n'
+                f'*The old category*:\n`{markdown_decoration.quote(old_category_name)}`\n\n'
+                f'*The new category*:\n`{markdown_decoration.quote(new_category_name)}`\n'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
         )
@@ -692,8 +691,8 @@ class AnswerWithNewNameForTask(BaseHandler):
         await self.message.reply(
             (
                 'You successfully changed the task name\\!\n\n'
-                f'*The old name*:\n`{escape_md(old_name)}`\n\n'
-                f'*The new name*:\n`{escape_md(task.name)}`\n'
+                f'*The old name*:\n`{markdown_decoration.quote(old_name)}`\n\n'
+                f'*The new name*:\n`{markdown_decoration.quote(task.name)}`\n'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
         )
@@ -721,8 +720,8 @@ class AnswerWithNewNameForCategory(BaseHandler):
         await self.message.reply(
             (
                 'You successfully changed the category name\\!\n\n'
-                f'*The old name*:\n`{escape_md(old_name)}`\n\n'
-                f'*The new name*:\n`{escape_md(category.name)}`\n'
+                f'*The old name*:\n`{markdown_decoration.quote(old_name)}`\n\n'
+                f'*The new name*:\n`{markdown_decoration.quote(category.name)}`\n'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
         )
@@ -739,7 +738,7 @@ class AnswerWithNewTaskReward(BaseHandler):
             task_reward = int(task_reward)
         except ValueError:
             await self.message.answer(
-                f'`{escape_md(task_reward)}` is invalid value\\.',
+                f'`{markdown_decoration.quote(task_reward)}` is invalid value\\.',
                 parse_mode=ParseModes.MARKDOWN_V2,
                 reply_markup=get_reply_for_cancel_question('Cancel reward editing'),
             )
@@ -767,30 +766,30 @@ class EditTask(BaseHandler):
 
         await self.message.answer(
             (
-                f'*Name:* `{escape_md(task.name)}`\n'
-                f'*Category:* `{escape_md(category_name)}`\n'
-                f'*Reward:* `{escape_md(task.str_reward)}`\n\n'
+                f'*Name:* `{markdown_decoration.quote(task.name)}`\n'
+                f'*Category:* `{markdown_decoration.quote(category_name)}`\n'
+                f'*Reward:* `{markdown_decoration.quote(task.str_reward)}`\n\n'
                 f'What do you want to do with this task?'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                 [
                     InlineKeyboardButton(
-                        f'{emojize(":pencil:")} Change name',
+                        text=f'{emojize(":pencil:")} Change name',
                         callback_data=f'{CallbackCommands.CHANGE_TASK_NAME} {task.id}',
                     ),
                     InlineKeyboardButton(
-                        f'{emojize(":file_folder:")} Change category',
+                        text=f'{emojize(":file_folder:")} Change category',
                         callback_data=f'{CallbackCommands.CHANGE_TASK_CATEGORY} {task.id}',
                     ),
                 ],
                 [
                     InlineKeyboardButton(
-                        f'{emojize(":coin:")} Change reward',
+                        text=f'{emojize(":coin:")} Change reward',
                         callback_data=f'{CallbackCommands.CHANGE_TASK_REWARD} {task.id}',
                     ),
                     InlineKeyboardButton(
-                        f'{emojize(":wastebasket:")} Delete',
+                        text=f'{emojize(":wastebasket:")} Delete',
                         callback_data=f'{CallbackCommands.DELETE_TASK} {task.id}',
                     ),
                 ],
@@ -841,13 +840,13 @@ class EditCategory(BaseHandler):
 
         await self.message.answer(
             (
-                f'*Name:* `{escape_md(category.name)}`\n\n'
+                f'*Name:* `{markdown_decoration.quote(category.name)}`\n\n'
                 f'What do you want to do with this category?'
             ),
             parse_mode=ParseModes.MARKDOWN_V2,
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(
-                    f'{emojize(":pencil:")} Change name',
+                    text=f'{emojize(":pencil:")} Change name',
                     callback_data=f'{CallbackCommands.CHANGE_CATEGORY_NAME} {category.id}',
                 ),
             ]]),
@@ -891,7 +890,7 @@ class ShowStats(BaseHandler):
                 else:
                     reward = str(work_log.reward)
 
-                answer += f'`{reward}` — {escape_md(work_log.showed_name)}\n'
+                answer += f'`{reward}` — {markdown_decoration.quote(work_log.showed_name)}\n'
 
         day_score = work_logs_stats.get_day_score(work_date)
         week_average = work_logs_stats.get_week_average(work_date)
@@ -905,17 +904,17 @@ class ShowStats(BaseHandler):
                 inline_keyboard=[
                     [
                         InlineKeyboardButton(
-                            f'{emojize(":spiral_calendar:")} Calendar heatmap',
+                            text=f'{emojize(":spiral_calendar:")} Calendar heatmap',
                             callback_data=CallbackCommands.SHOW_CALENDAR_HEATMAP,
                         ),
                     ],
                     [
                         InlineKeyboardButton(
-                            f'{emojize(":broom:")} Check & Clean',
+                            text=f'{emojize(":broom:")} Check & Clean',
                             callback_data=CallbackCommands.SHOW_FINISHED_TASKS,
                         ),
                         InlineKeyboardButton(
-                            f'{emojize(":light_bulb:")} What to do',
+                            text=f'{emojize(":light_bulb:")} What to do',
                             callback_data=CallbackCommands.SHOW_OLD_TASKS,
                         ),
                     ],
@@ -935,11 +934,11 @@ class ShowCalendarHeatmap(BaseHandler):
         file_name, buffer = await work_logs_stats.generate_year_plot(year=year, for_user=self.message.from_user)
 
         await self.message.answer_document(
-            TelegramInputFile(buffer, filename=file_name),
+            BufferedInputFile(file=buffer.read(), filename=file_name),
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[[
                     InlineKeyboardButton(
-                        f'{emojize(":magnifying_glass_tilted_left:")} Show more',
+                        text=f'{emojize(":magnifying_glass_tilted_left:")} Show more',
                         callback_data=CallbackCommands.SHOW_DETAILED_STATISTICS,
                     ),
                 ]],
@@ -963,7 +962,7 @@ class ShowDetailedStats(BaseHandler):
         for year in reversed(years_with_work_logs):
             file_name, buffer = await work_logs_stats.generate_year_plot(year=year, for_user=self.message.from_user)
             work_logs_stats.reset()
-            await self.message.answer_document(TelegramInputFile(buffer, filename=file_name))
+            await self.message.answer_document(BufferedInputFile(file=buffer.read(), filename=file_name))
 
 
 class DeleteWorkLog(BaseHandler):
@@ -1001,7 +1000,10 @@ class ImportWorkLogs(BaseHandler):
 
         await self.message.answer('Example:')
         await self.message.answer_document(
-            TelegramInputFile(io.StringIO(task_manager.get_template_for_import_task_logs()), filename='example.json'),
+            BufferedInputFile(
+                file=task_manager.get_template_for_import_task_logs().encode(),
+                filename='example.json',
+            ),
         )
         await user_manager.wait_answer_for(constants.QuestionTypes.FILE_WITH_WORK_LOGS)
         await self.message.answer(
@@ -1024,7 +1026,7 @@ class ExportData(BaseHandler):
 
         for file_name, data in exported_data.items():
             await self.message.answer_document(
-                TelegramInputFile(io.StringIO(data), filename=file_name),
+                BufferedInputFile(file=data.encode(), filename=file_name),
             )
 
 

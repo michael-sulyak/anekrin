@@ -3,8 +3,6 @@ import json
 import logging
 import signal
 import typing
-from asyncio import exceptions as asyncio_exceptions
-from functools import partial
 
 import aio_pika
 import aio_pika.abc
@@ -22,8 +20,9 @@ from app.core.utils import init_telegram_bot
 from app.models.utils import close_db, init_db
 
 
+log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging_level = logging.INFO
-logging.basicConfig(level=logging_level)
+logging.basicConfig(level=logging_level, format=log_format)
 
 sentry_sdk.init(
     dsn=config.SENTRY_DSN,
@@ -50,9 +49,20 @@ def init_settings_for_plt() -> None:
     plt.style.use('cyberpunk')
 
 
+shutdown_task = None
+
+
 async def main() -> typing.NoReturn:
-    logging.info('Initialization Telegram Bot...')
-    init_telegram_bot()
+    loop = asyncio.get_running_loop()
+
+    def initiate_shutdown() -> None:
+        global shutdown_task
+        if shutdown_task is None:
+            shutdown_task = loop.create_task(shutdown())
+
+    # Registering the signal handlers
+    for signal_name in ('SIGINT', 'SIGTERM'):
+        loop.add_signal_handler(getattr(signal, signal_name), initiate_shutdown)
 
     logging.info('Initialization matplotlib...')
     init_settings_for_plt()
@@ -63,9 +73,13 @@ async def main() -> typing.NoReturn:
     logging.info('Connecting to MQ...')
     connection = await aio_pika.connect_robust(
         url=config.TELEHOOKS_MQ_URL,
-        loop=asyncio.get_running_loop(),
+        loop=loop,
     )
-    handler = TelegramMessageHandler()
+
+    logging.info('Initialization Telegram Bot...')
+    telegram_bot = init_telegram_bot()
+
+    handler = TelegramMessageHandler(telegram_bot=telegram_bot)
 
     async with connection:
         channel: aio_pika.abc.AbstractChannel = await connection.channel()
@@ -81,8 +95,14 @@ async def main() -> typing.NoReturn:
                     async with message.process():
                         telegram_update = TelegramUpdate(**json.loads(message.body))
                         await handler.process_update(telegram_update)
-            except (asyncio_exceptions.CancelledError, asyncio_exceptions.TimeoutError,):
-                pass
+            except asyncio.CancelledError:
+                logging.info('Message processing cancelled due to shutdown.')
+            except Exception:
+                logging.exception('Unexpected error while processing messages')
+            finally:
+                logging.info('Closing queue iterator...')
+                await queue_iter.close()  # Explicitly close the queue iterator
+                logging.info('Queue iterator closed.')
 
 
 async def shutdown() -> None:
@@ -98,24 +118,17 @@ async def shutdown() -> None:
         task.cancel('Shutdown')
         tasks.append(task)
 
+    # Wait for all tasks to finish
     await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Close the database connection
     await close_db()
 
     logging.info('Shutdown completed.')
 
+    # Stop the event loop
     asyncio.get_running_loop().stop()
 
 
 if __name__ == '__main__':
-    main_loop = asyncio.new_event_loop()
-
-    for signal_name in ('SIGINT', 'SIGTERM',):
-        main_loop.add_signal_handler(getattr(signal, signal_name), partial(main_loop.create_task, shutdown()))
-
-    main_loop.create_task(main())
-
-    try:
-        main_loop.run_forever()
-    finally:
-        main_loop.close()
-        logging.info('Successfully shutdown service.')
+    asyncio.run(main())

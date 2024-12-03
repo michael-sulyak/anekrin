@@ -13,9 +13,9 @@ from .. import config
 def get_main_reply_keyboard_markup() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[[
-            KeyboardButton(constants.BotCommand.SHOW_TASKS),
-            KeyboardButton(constants.BotCommand.SHOW_STATS),
-            KeyboardButton(constants.BotCommand.SHOW_SETTING),
+            KeyboardButton(text=constants.BotCommand.SHOW_TASKS),
+            KeyboardButton(text=constants.BotCommand.SHOW_STATS),
+            KeyboardButton(text=constants.BotCommand.SHOW_SETTING),
         ]],
         resize_keyboard=True,
     )
@@ -29,14 +29,14 @@ def get_reply_for_cancel_question(name: str = 'Cancel') -> InlineKeyboardMarkup:
 
 def get_btn_for_cancel_question(name: str = 'Cancel') -> InlineKeyboardButton:
     return InlineKeyboardButton(
-        f'{emojize(":multiply:")} {name}',
+        text=f'{emojize(":multiply:")} {name}',
         callback_data=constants.CallbackCommands.CANCEL_QUESTION,
     )
 
 
 def get_btn_for_reset_work_date(name: str = 'Reset & Use the current day') -> InlineKeyboardButton:
     return InlineKeyboardButton(
-        f'{emojize(":spiral_calendar:")} {name}',
+        text=f'{emojize(":spiral_calendar:")} {name}',
         callback_data=constants.CallbackCommands.RESET_WORK_DATE,
     )
 
@@ -82,6 +82,5 @@ def get_day_performance_info(*, day_score: int, week_average: int) -> str:
     )
 
 
-def init_telegram_bot() -> None:
-    telegram_bot = TelegramBot(token=config.TELEGRAM_API_TOKEN)
-    TelegramBot.set_current(telegram_bot)
+def init_telegram_bot() -> TelegramBot:
+    return TelegramBot(token=config.TELEGRAM_API_TOKEN)

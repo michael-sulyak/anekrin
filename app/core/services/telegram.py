@@ -2,6 +2,7 @@ import asyncio
 import logging
 import typing
 
+from aiogram import Bot as TelegramBot
 from aiogram.types import (
     Update as TelegramUpdate,
 )
@@ -67,11 +68,13 @@ class TelegramMessageHandler:
     handler_classes_map: typing.Dict[str, typing.Dict[str, typing.Type[BaseHandler]]]
     _message_class: typing.Type[BaseMessage]
     _tasks_map: typing.Dict[int, asyncio.Task]
+    _telegram_bot: TelegramBot
 
-    def __init__(self, *, message_class: typing.Type[BaseMessage] = Message) -> None:
+    def __init__(self, *, message_class: typing.Type[BaseMessage] = Message, telegram_bot: TelegramBot) -> None:
         self._message_class = message_class
         self._fill_handler_classes_map()
         self._tasks_map = {}
+        self._telegram_bot = telegram_bot
 
     async def process_update(self,
                              telegram_update: TelegramUpdate, *,
@@ -113,7 +116,7 @@ class TelegramMessageHandler:
             if telegram_update.message.content_type == MessageContentTypes.MESSAGE_AUTO_DELETE_TIMER_CHANGED:
                 return
 
-            telegram_message = telegram_update.message
+            telegram_message = telegram_update.message.as_(self._telegram_bot)
             user, user_is_created = await UserManager.get_user_by_telegram_user(telegram_message.from_user)
             message = self._message_class(from_user=user, telegram_message=telegram_message)
 
@@ -130,10 +133,13 @@ class TelegramMessageHandler:
                 command_name = telegram_message.text
                 handler_type = HandlerTypes.MESSAGE
         elif telegram_update.callback_query:
-            callback_query = telegram_update.callback_query
+            callback_query = telegram_update.callback_query.as_(self._telegram_bot)
             command_name, *command_args = callback_query.data.split(' ')
             user, user_is_created = await UserManager.get_user_by_telegram_user(callback_query.from_user)
-            message = self._message_class(from_user=user, telegram_message=callback_query.message)
+            message = self._message_class(
+                from_user=user,
+                telegram_message=callback_query.message.as_(self._telegram_bot),
+            )
             handler_type = HandlerTypes.CALLBACK_QUERY
         else:
             return
@@ -202,14 +208,14 @@ class TelegramMessageHandler:
                     continue
 
                 if (
-                        handler_type in HandlerTypes.ANSWER
-                        and handler_value in self.handler_classes_map[HandlerTypes.FILE_ANSWER]
+                    handler_type in HandlerTypes.ANSWER
+                    and handler_value in self.handler_classes_map[HandlerTypes.FILE_ANSWER]
                 ):
                     continue
 
                 if (
-                        handler_type in HandlerTypes.FILE_ANSWER
-                        and handler_value in self.handler_classes_map[HandlerTypes.ANSWER]
+                    handler_type in HandlerTypes.FILE_ANSWER
+                    and handler_value in self.handler_classes_map[HandlerTypes.ANSWER]
                 ):
                     continue
 

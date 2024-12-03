@@ -8,7 +8,7 @@ test:
 	pytest app
 
 bash:
-	docker-compose run --rm core bash
+	docker compose run --rm core bash
 
 stats:
-	docker-compose run --rm core python3 scripts/stats.py
+	docker compose run --rm core python3 scripts/stats.py

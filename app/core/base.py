@@ -1,6 +1,9 @@
 import abc
+import asyncio
+import logging
 import typing
 
+from aiogram.exceptions import TelegramNetworkError
 from aiogram.types import (
     InlineKeyboardMarkup, Message as TelegramMessage,
 )
@@ -56,7 +59,12 @@ class Message(BaseMessage):
         if 'reply_markup' not in kwargs:
             kwargs['reply_markup'] = get_main_reply_keyboard_markup()
 
-        return await self._telegram_message.answer(*args, **kwargs)
+        try:
+            return await self._telegram_message.answer(*args, **kwargs)
+        except TelegramNetworkError:
+            logging.exception('Telegram network error occurred while answering')
+            await asyncio.sleep(1)
+            return await self._telegram_message.answer(*args, **kwargs)
 
     async def answer_error(self, error: ValidationError, **kwargs) -> TelegramMessage:
         return await self.answer(

@@ -68,9 +68,9 @@ class TelegramMessageHandler:
     handler_classes_map: typing.Dict[str, typing.Dict[str, typing.Type[BaseHandler]]]
     _message_class: typing.Type[BaseMessage]
     _tasks_map: typing.Dict[int, asyncio.Task]
-    _telegram_bot: TelegramBot
+    _telegram_bot: typing.Optional[TelegramBot]
 
-    def __init__(self, *, message_class: typing.Type[BaseMessage] = Message, telegram_bot: TelegramBot) -> None:
+    def __init__(self, *, message_class: typing.Type[BaseMessage] = Message, telegram_bot: typing.Optional[TelegramBot] = None) -> None:
         self._message_class = message_class
         self._fill_handler_classes_map()
         self._tasks_map = {}
@@ -169,7 +169,7 @@ class TelegramMessageHandler:
 
         if user_is_created:
             await TaskManager(user=user).create_samples()
-            await message.answer('I created samples for your. You can delete them.')
+            await message.answer('I have created sample tasks for you. You can delete them.')
 
     @staticmethod
     def _extract_telegram_user_id(telegram_update: TelegramUpdate) -> typing.Optional[int]:
@@ -208,13 +208,13 @@ class TelegramMessageHandler:
                     continue
 
                 if (
-                    handler_type in HandlerTypes.ANSWER
+                    handler_type == HandlerTypes.ANSWER
                     and handler_value in self.handler_classes_map[HandlerTypes.FILE_ANSWER]
                 ):
                     continue
 
                 if (
-                    handler_type in HandlerTypes.FILE_ANSWER
+                    handler_type == HandlerTypes.FILE_ANSWER
                     and handler_value in self.handler_classes_map[HandlerTypes.ANSWER]
                 ):
                     continue

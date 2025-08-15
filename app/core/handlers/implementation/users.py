@@ -160,7 +160,7 @@ class SetWorkDate(BaseHandler):
         except ValueError:
             await self.message.reply(
                 f'`{markdown_decoration.quote(new_work_date)}` is invalid date\\.\n'
-                f'Use format `YYYY-MM-DDM`\\.',
+                f'Use format `YYYY-MM-DD`\\.',
                 parse_mode=ParseModes.MARKDOWN_V2,
                 reply_markup=reply_markup_for_waiting_of_answer,
             )

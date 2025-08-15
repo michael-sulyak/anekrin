@@ -47,7 +47,7 @@ class QuestionTypes(ClassPropertyAllMixin):
     NAME_FOR_NEW_CATEGORY = 'name_for_new_category'
     CHANGE_TASK_NAME = 'change_task_name'
     CHANGE_CATEGORY_NAME = 'change_category_name'
-    CHANCE_TASK_REWARD = 'change_task_reward'
+    CHANGE_TASK_REWARD = 'change_task_reward'
     INFO_ABOUT_TASKS = 'info_about_tasks'
     FILE_WITH_WORK_LOGS = 'file_with_work_logs'
 

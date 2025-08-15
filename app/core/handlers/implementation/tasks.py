@@ -21,7 +21,7 @@ from ...exceptions import ValidationError
 from ...services.categories import CategoryManager
 from ...services.tasks import TaskManager
 from ...services.users import UserManager
-from ...services.work_log_stats import WorkLogsStats
+from ...services.work_log_stats import WorkLogStats
 from ...utils import get_day_performance_info, get_emojize_for_score, get_reply_for_cancel_question
 from .... import models
 
@@ -287,7 +287,7 @@ class CompleteTask(BaseHandler):
 
         work_date = self.message.from_user.get_selected_work_date()
 
-        work_logs_stats = WorkLogsStats()
+        work_logs_stats = WorkLogStats()
         await work_logs_stats.set_data_from_db_for_date(
             date=work_date,
             for_user=self.message.from_user,
@@ -487,7 +487,7 @@ class ChangeCategoryName(BaseHandlerForCategoryFieldUpdating):
 
 class ChangeTaskReward(BaseHandlerForTaskFieldUpdating):
     name = CallbackCommands.CHANGE_TASK_REWARD
-    question_type = QuestionTypes.CHANCE_TASK_REWARD
+    question_type = QuestionTypes.CHANGE_TASK_REWARD
 
     async def _send_prompt(self, task: models.Task) -> None:
         await self.message.answer(
@@ -728,7 +728,7 @@ class AnswerWithNewNameForCategory(BaseHandler):
 
 
 class AnswerWithNewTaskReward(BaseHandler):
-    name = QuestionTypes.CHANCE_TASK_REWARD
+    name = QuestionTypes.CHANGE_TASK_REWARD
     type = HandlerTypes.ANSWER
 
     async def handle(self, task_reward: str, task_id: str) -> None:
@@ -865,7 +865,7 @@ class ShowStats(BaseHandler):
             for i in reversed(range(7))
         )
 
-        work_logs_stats = WorkLogsStats()
+        work_logs_stats = WorkLogStats()
         await work_logs_stats.set_data_from_db_for_period(
             date_range=(dates[0], dates[-1],),
             for_user=self.message.from_user,
@@ -930,7 +930,7 @@ class ShowCalendarHeatmap(BaseHandler):
     @with_throttling(datetime.timedelta(hours=1), count=5)
     async def handle(self) -> None:
         year = self.message.from_user.get_selected_work_date().year
-        work_logs_stats = WorkLogsStats()
+        work_logs_stats = WorkLogStats()
         file_name, buffer = await work_logs_stats.generate_year_plot(year=year, for_user=self.message.from_user)
 
         await self.message.answer_document(
@@ -952,7 +952,7 @@ class ShowDetailedStats(BaseHandler):
 
     @with_throttling(datetime.timedelta(hours=1), count=5)
     async def handle(self) -> None:
-        work_logs_stats = WorkLogsStats()
+        work_logs_stats = WorkLogStats()
         years_with_work_logs = (await work_logs_stats.get_years_with_work_logs(for_user=self.message.from_user))[:-1]
 
         if not years_with_work_logs:

@@ -11,11 +11,11 @@ from ... import models
 async def recalculate_day_bonus(date: datetime.date, *, user: models.User, _max_next_days_to_check: int = 365) -> int:
     # Note: Need to run with lock by a user
 
-    from .work_log_stats import WorkLogsStats
+    from .work_log_stats import WorkLogStats
 
     next_date = date + datetime.timedelta(days=1)
 
-    work_logs_stats = WorkLogsStats()
+    work_logs_stats = WorkLogStats()
     await work_logs_stats.set_data_from_db_for_period(
         date_range=(date, next_date,),
         for_user=user,

@@ -38,7 +38,7 @@ async def test_start() -> None:
         ),
         ExpectedCall(
             name='answer',
-            args__0__contains='I created samples for your. You can delete them.',
+            args__0__contains='I have created sample tasks for you. You can delete them.',
             args__len=1,
         ),
     ).compare_with(calls)

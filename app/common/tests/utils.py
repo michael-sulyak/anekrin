@@ -3,7 +3,9 @@ import random
 import string
 import typing
 
-from aiogram.types import Update as TelegramUpdate, User as TelegramUser, CallbackQuery as TelegramCallbackQuery
+from aiogram.types import (
+    CallbackQuery as TelegramCallbackQuery, Message as TelegramMessage, Update as TelegramUpdate, User as TelegramUser,
+)
 
 
 DEFAULT_TEST_SENDER = {
@@ -27,13 +29,13 @@ DEFAULT_TEST_CHAT = {
 def generate_telegram_update_for_text(text: str, *, sender: dict) -> TelegramUpdate:
     return TelegramUpdate(
         update_id=random.randint(1, 1_000_000),
-        message={
+        message=TelegramMessage(**{
             'message_id': random.randint(1, 1_000_000),
-            'from': sender,
+            'from_user': sender,
             'chat': DEFAULT_TEST_CHAT,
             'date': int(datetime.datetime.now().timestamp()),
             'text': text,
-        },
+        }),
     )
 
 
@@ -46,9 +48,17 @@ def generate_telegram_update_for_callback(callback_query: str, *, sender: dict) 
     return TelegramUpdate(
         update_id=random.randint(1, 1_000_000),
         callback_query=CustomTelegramCallbackQuery(**{
+            'id': str(random.randint(1, 1_000_000)),
             'data': callback_query,
-            'chat': DEFAULT_TEST_CHAT,
+            'chat_instance': str(random.randint(1, 1_000_000)),
             'from': sender,
+            'message': {
+                'message_id': random.randint(1, 1_000_000),
+                'from_user': sender,
+                'chat': DEFAULT_TEST_CHAT,
+                'date': int(datetime.datetime.now().timestamp()),
+                'text': callback_query,
+            },
         }),
     )
 

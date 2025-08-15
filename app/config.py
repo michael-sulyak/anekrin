@@ -1,4 +1,5 @@
 import os
+from urllib.parse import quote_plus
 
 
 DATABASE_NAME = os.environ['POSTGRES_DB']
@@ -6,7 +7,10 @@ DATABASE_USER = os.environ['POSTGRES_USER']
 DATABASE_PASSWORD = os.environ['POSTGRES_PASSWORD']
 DATABASE_HOST = os.environ['POSTGRES_HOST']
 DATABASE_PORT = os.environ['POSTGRES_PORT']
-DATABASE_URL = f'postgres://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}'
+DATABASE_URL = (
+    f'postgres://{quote_plus(DATABASE_USER)}:{quote_plus(DATABASE_PASSWORD)}'
+    f'@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}'
+)
 
 TORTOISE_ORM = {
     'connections': {
@@ -14,10 +18,10 @@ TORTOISE_ORM = {
     },
     'apps': {
         'models': {
-            'models': (
+            'models': [
                 'app.models',
                 'aerich.models',
-            ),
+            ],
             'default_connection': 'default',
         },
     },

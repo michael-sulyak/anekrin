@@ -5,10 +5,10 @@ import typing
 @dataclasses.dataclass
 class ActualCall:
     name: str
-    args: dataclasses.field(
+    args: list = dataclasses.field(
         default_factory=list,
     )
-    kwargs: dataclasses.field(
+    kwargs: dict = dataclasses.field(
         default_factory=dict,
     )
 
@@ -72,7 +72,7 @@ class ExpectedCall:
 
 
 class ExpectedCalls:
-    expected_calls: tuple[ExpectedCall]
+    expected_calls: tuple[ExpectedCall, ...]
 
     def __init__(self, *expected_calls: ExpectedCall) -> None:
         self.expected_calls = expected_calls

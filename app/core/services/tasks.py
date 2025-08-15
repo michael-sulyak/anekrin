@@ -102,7 +102,7 @@ class TaskManager:
                 },
                 {
                     'name': 'Take a walk',
-                    'reward': None,
+                    'reward': 0,
                 },
             )
 
@@ -278,7 +278,7 @@ class TaskManager:
             ).first()
 
             if not task:
-                raise ValidationError('The task does\'s exist.')
+                raise ValidationError('The task doesn\'t exist.')
 
             task.owner = self.user  # To prevent a query
 
@@ -323,7 +323,7 @@ class TaskManager:
             work_log = await self.get_work_log(work_log_id)
 
             if not work_log:
-                raise ValidationError('This post has already been deleted.')
+                raise ValidationError('This work log has already been deleted.')
 
             date = work_log.date
             await work_log.delete()

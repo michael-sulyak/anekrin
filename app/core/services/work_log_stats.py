@@ -13,7 +13,7 @@ from .. import constants
 from ...models.utils import get_first
 
 
-class WorkLogsStats:
+class WorkLogStats:
     _day_score_map: dict[datetime.date, int]
 
     def __init__(self) -> None:

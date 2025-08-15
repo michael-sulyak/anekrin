@@ -12,7 +12,7 @@ from app.models.contrib import UniqueTogether
 
 class User(Model):
     id = fields.BigIntField(
-        pk=True,
+        primary_key=True,
     )
     telegram_user_id = fields.BigIntField(
         unique=True,
@@ -44,37 +44,37 @@ class User(Model):
 
 class Category(Model):
     id = fields.BigIntField(
-        pk=True,
+        primary_key=True,
     )
     name = fields.TextField()
     owner: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         model_name='models.User',
         related_name='categories',
-        index=True,
+        db_index=True,
     )
 
     class Meta:
         indexes = (
-            UniqueTogether(fields={'owner_id', 'name'}, is_deferrable_initially_immediate=True),
+            UniqueTogether(fields=('owner_id', 'name',), is_deferrable_initially_immediate=True),
         )
 
 
 class Task(Model):
     id = fields.BigIntField(
-        pk=True,
+        primary_key=True,
     )
     name = fields.TextField()
     owner: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         model_name='models.User',
         related_name='tasks',
-        index=True,
+        db_index=True,
     )
     category: fields.ForeignKeyRelation[Category] = fields.ForeignKeyField(
         model_name='models.Category',
         related_name='tasks',
         on_delete=fields.SET_NULL,
         null=True,
-        index=True,
+        db_index=True,
     )
     reward = fields.IntField()
     created_at = fields.DatetimeField(
@@ -93,13 +93,13 @@ class Task(Model):
 
     class Meta:
         indexes = (
-            UniqueTogether(fields={'owner_id', 'name'}, is_deferrable_initially_immediate=True),
+            UniqueTogether(fields=('owner_id', 'name',), is_deferrable_initially_immediate=True),
         )
 
 
 class WorkLog(Model):
     id = fields.BigIntField(
-        pk=True,
+        primary_key=True,
     )
     type = fields.CharField(
         max_length=20,
@@ -110,14 +110,14 @@ class WorkLog(Model):
         related_name='work_logs',
         on_delete=fields.SET_NULL,
         null=True,
-        index=True,
+        db_index=True,
     )
     name = fields.TextField()
     date = fields.DateField()
     owner: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         model_name='models.User',
         related_name='work_logs',
-        index=True,
+        db_index=True,
     )
     reward = fields.IntField()
 
@@ -126,8 +126,8 @@ class WorkLog(Model):
 
     class Meta:
         indexes = (
-            indexes.BrinIndex(fields={'owner_id', 'date'}),
-            indexes.BrinIndex(fields={'task_id', 'date'}),
+            indexes.BrinIndex(fields=('owner_id', 'date',)),
+            indexes.BrinIndex(fields=('task_id', 'date',)),
         )
 
     @property
